@@ -38,17 +38,17 @@ class ours(IStrategy):
     INTERFACE_VERSION = 3
 
     # Can this strategy go short?
-    can_short: bool = False
+    can_short: bool = True
 
     # Minimal ROI designed for the strategy.
     # This attribute will be overridden if the config file contains "minimal_roi".
     minimal_roi = {
-        "0": 0.3
+        "0": 0.4
     }
 
     # Optimal stoploss designed for the strategy.
     # This attribute will be overridden if the config file contains "stoploss".
-    stoploss = -0.10
+    stoploss = -0.2
 
     # Trailing stoploss
     trailing_stop = False
@@ -74,7 +74,7 @@ class ours(IStrategy):
     exit_short_rsi = IntParameter(low=1, high=50, default=30, space='buy', optimize=True, load=True)
 
     # Number of candles the strategy requires before producing valid signals
-    startup_candle_count: int = 30
+    startup_candle_count: int = 10
 
     # Optional order type mapping.
     order_types = {
@@ -153,26 +153,17 @@ class ours(IStrategy):
         dataframe.loc[
             (
                 # Trix signals (9, 15)
-                (dataframe['trix9'] > dataframe['trix15'])  # Make sure it's increasing
-                #(dataframe['sma20'] > 26000) & # Make sure it's above 26000
-                #(dataframe['sma60'] > 20) & # Make sure it's above 20
-                #(dataframe['close'] > dataframe['sma200']) & # Make sure it's above 200
-                #(dataframe['volume'] > dataframe['sma250']) &  # Make sure Volume is not 0
-                #(dataframe['trix9'] > 0) &  # Make sure it's above 0
-                #(dataframe['trix15'] > 0) 
+                (dataframe['trix9'] > dataframe['trix15']) &  # Make sure it's increasing
+                (dataframe['trix9'] > 0)  # Make sure it's positive ) 
             ),
             'enter_long'] = 1
 
         dataframe.loc[
             (
-                (dataframe['trix9'] < dataframe['trix15']) &
-                (dataframe['trix9'] < 0) &
-                (dataframe['trix15'] < 0)
-                # Signal: RSI crosses above 70
-                #(qtpylib.crossed_above(dataframe['rsi'], self.short_rsi.value)) &
-                #(dataframe['tema'] > dataframe['bb_middleband']) &  # Guard: tema above BB middle
-                #(dataframe['tema'] < dataframe['tema'].shift(1)) &  # Guard: tema is falling
-                #(dataframe['volume'] > 0)  # Make sure Volume is not 0
+                # Trix signals (9, 15)
+                (dataframe['trix9'] < dataframe['trix15'])   # Make sure it's increasing
+                #(dataframe['trix9'] < 0)  # Make sure it's positive )
+                
             ),
             'enter_short'] = 1
 
@@ -187,25 +178,14 @@ class ours(IStrategy):
         """
         dataframe.loc[
             (   
-                (dataframe['trix15'] > dataframe['trix9']) 
-                # Signal: RSI crosses above 70
-                #(qtpylib.crossed_above(dataframe['rsi'], self.sell_rsi.value)) &
-                #(dataframe['tema'] > dataframe['bb_middleband']) &  # Guard: tema above BB middle
-                #(dataframe['tema'] < dataframe['tema'].shift(1)) &  # Guard: tema is falling
-                #(dataframe['volume'] > 0)  # Make sure Volume is not 0
+                (dataframe['trix9'] < dataframe['trix15'])
             ),
 
             'exit_long'] = 1
 
         dataframe.loc[
             (
-                (dataframe['trix15'] < dataframe['trix9'])
-                # Signal: RSI crosses above 30
-                #(qtpylib.crossed_above(dataframe['rsi'], self.exit_short_rsi.value)) &
-                # Guard: tema below BB middle
-                #(dataframe['tema'] <= dataframe['bb_middleband']) &
-                #(dataframe['tema'] > dataframe['tema'].shift(1)) &  # Guard: tema is raising
-                #(dataframe['volume'] > 0)  # Make sure Volume is not 0
+                (dataframe['trix9'] > dataframe['trix15'])
             ),
             'exit_short'] = 1
 
