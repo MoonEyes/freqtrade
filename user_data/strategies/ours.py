@@ -43,7 +43,7 @@ class ours(IStrategy):
     # Minimal ROI designed for the strategy.
     # This attribute will be overridden if the config file contains "minimal_roi".
     minimal_roi = {
-        "0": 4
+        "0": 0.3
     }
 
     # Optimal stoploss designed for the strategy.
@@ -92,7 +92,7 @@ class ours(IStrategy):
 
     plot_config = {
         'main_plot': {
-            'tema': {},
+           
         },
         'subplots': {
             "TRIX": {
@@ -153,13 +153,13 @@ class ours(IStrategy):
         dataframe.loc[
             (
                 # Trix signals (9, 15)
-                (dataframe['trix9'] > dataframe['trix15']) & # Make sure it's increasing
+                (dataframe['trix9'] > dataframe['trix15'])  # Make sure it's increasing
                 #(dataframe['sma20'] > 26000) & # Make sure it's above 26000
                 #(dataframe['sma60'] > 20) & # Make sure it's above 20
                 #(dataframe['close'] > dataframe['sma200']) & # Make sure it's above 200
                 #(dataframe['volume'] > dataframe['sma250']) &  # Make sure Volume is not 0
-                (dataframe['trix9'] > 0) &  # Make sure it's above 0
-                (dataframe['trix15'] > 0) 
+                #(dataframe['trix9'] > 0) &  # Make sure it's above 0
+                #(dataframe['trix15'] > 0) 
             ),
             'enter_long'] = 1
 
