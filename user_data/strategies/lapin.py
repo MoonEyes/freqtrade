@@ -38,35 +38,38 @@ class lapin(IStrategy):
     INTERFACE_VERSION = 3
 
     # Can this strategy go short?
-    can_short: bool = True
+    can_short: bool = False
 
 
     # Minimal ROI designed for the strategy.
     # This attribute will be overridden if the config file contains "minimal_roi".
     minimal_roi = {
-        "0": 0.4
-    }
+        "0": 0.283,
+        "256": 0.072,
+        "730": 0.04,
+        "1500": 0
+        }
 
     # Optimal stoploss designed for the strategy.
     # This attribute will be overridden if the config file contains "stoploss".
-    stoploss = -0.2
+    stoploss = -0.333
 
     # Trailing stoploss
-    trailing_stop = False
-    # trailing_only_offset_is_reached = False
-    # trailing_stop_positive = 0.01
-    # trailing_stop_positive_offset = 0.0  # Disabled / not configured
+    #trailing_stop = True
+    #trailing_only_offset_is_reached = False
+    #trailing_stop_positive = 0.05
+    #trailing_stop_positive_offset = 0.0  # Disabled / not configured
 
     # Optimal timeframe for the strategy.
-    timeframe = '1d'
+    timeframe = '1h'
 
     # Run "populate_indicators()" only for new candle.
-    process_only_new_candles = False
+    #process_only_new_candles = False
 
     # These values can be overridden in the config.
-    use_exit_signal = True
-    exit_profit_only = False
-    ignore_roi_if_entry_signal = False
+    #use_exit_signal = False
+    #exit_profit_only = False
+    #ignore_roi_if_entry_signal = False
 
     # Hyperoptable parameters
     buy_rsi = IntParameter(low=1, high=50, default=30, space='buy', optimize=True, load=True)
@@ -93,77 +96,52 @@ class lapin(IStrategy):
 
     plot_config = {
         'main_plot': {
-           
+                #'ema5': {'color': 'blue'},
+                #'ema8': {'color': 'red'},
+                #'ema13': {'color': 'green'},
+                'ema100': {'color': 'blue'},
+                'ema200': {'color': 'orange'},
         },
         'subplots': {
-            "TRIX": {
-                'trix9': {'color': 'blue'},
-                'trix15': {'color': 'orange'},
-            }
+            
         }
     }
 
+
     def informative_pairs(self):
-        """
-        Define additional, informative pair/interval combinations to be cached from the exchange.
-        These pair/interval combinations are non-tradeable, unless they are part
-        of the whitelist as well.
-        For more information, please consult the documentation
-        :return: List of tuples in the format (pair, interval)
-            Sample: return [("ETH/USDT", "5m"),
-                            ("BTC/USDT", "15m"),
-                            ]
-        """
+    
         return []
 
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        """
-        Adds several different TA indicators to the given DataFrame
-
-        Performance Note: For the best performance be frugal on the number of indicators
-        you are using. Let uncomment only the indicator you are using in your strategies
-        or your hyperopt configuration, otherwise you will waste your memory and CPU usage.
-        :param dataframe: Dataframe with data from the exchange
-        :param metadata: Additional information, like the currently traded pair
-        :return: a Dataframe with all mandatory indicators for the strategies
-        """
-
+        
         # Momentum Indicators
         # ------------------------------------
-
-        # TRIX
-        dataframe['trix120'] = ta.TRIX(dataframe['close'], timeperiod=120)
-        dataframe['trix200'] = ta.TRIX(dataframe['close'], timeperiod=200)
-
-        # # SMA - Simple Moving Average
-        dataframe['sma20'] = ta.SMA(dataframe['close'], timeperiod=20)
-        dataframe['sma60'] = ta.SMA(dataframe['close'], timeperiod=60)
-        dataframe['sma200'] = ta.SMA(dataframe['close'], timeperiod=200)
-        dataframe['sma250'] = ta.SMA(dataframe['close'], timeperiod=250)
-        
+        # EMA - Exponential Moving Average
+        dataframe['ema5'] = ta.EMA(dataframe['close'], timeperiod=5)
+        dataframe['ema8'] = ta.EMA(dataframe['close'], timeperiod=8)
+        dataframe['ema13'] = ta.EMA(dataframe['close'], timeperiod=13)
+        dataframe['ema200'] = ta.EMA(dataframe['close'], timeperiod=200)
+        dataframe['ema100'] = ta.EMA(dataframe['close'], timeperiod=100)
 
         return dataframe
 
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        """
-        Based on TA indicators, populates the entry signal for the given dataframe
-        :param dataframe: DataFrame
-        :param metadata: Additional information, like the currently traded pair
-        :return: DataFrame with entry columns populated
-        """
+    
         dataframe.loc[
             (
-                # Trix signals (9, 15)
-                (dataframe['trix120'] > dataframe['trix200']) &  # Make sure it's increasing
-                (dataframe['trix120'] > 0)  # Make sure it's positive ) 
+                ##(dataframe['ema5'] > dataframe['ema8']) &
+                #(dataframe['ema8'] > dataframe['ema13']) &
+                #(dataframe['high'] > dataframe['ema5']) &
+                (dataframe['close'] > dataframe['ema200'])
             ),
             'enter_long'] = 1
 
         dataframe.loc[
             (
-                # Trix signals (9, 15)
-                (dataframe['trix120'] < dataframe['trix200'])   # Make sure it's increasing
-                #(dataframe['trix9'] < 0)  # Make sure it's positive )
+                #(dataframe['ema5'] < dataframe['ema8']) &
+                #(dataframe['ema8'] < dataframe['ema13']) &
+                #(dataframe['low'] < dataframe['ema5']) 
+                (dataframe['close'] < dataframe['ema200']) 
                 
             ),
             'enter_short'] = 1
@@ -179,14 +157,17 @@ class lapin(IStrategy):
         """
         dataframe.loc[
             (   
-                (dataframe['trix120'] < dataframe['trix200'])
+               # (dataframe['close'] < dataframe['ema5']) 
+                (dataframe['close'] < dataframe['ema100'])
             ),
 
             'exit_long'] = 1
 
         dataframe.loc[
             (
-                (dataframe['trix120'] > dataframe['trix200'])
+                (dataframe['close'] > dataframe['ema100'])
+                #(dataframe['close'] > dataframe['ema5']) 
+                
             ),
             'exit_short'] = 1
 
