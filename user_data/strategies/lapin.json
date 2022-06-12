@@ -1,12 +1,6 @@
 {
   "strategy_name": "lapin",
   "params": {
-    "trailing": {
-      "trailing_stop": false,
-      "trailing_stop_positive": null,
-      "trailing_stop_positive_offset": 0.0,
-      "trailing_only_offset_is_reached": false
-    },
     "buy": {
       "buy_rsi": 13,
       "exit_short_rsi": 21
@@ -17,15 +11,21 @@
     },
     "protection": {},
     "roi": {
-      "0": 0.28300000000000003,
-      "256": 0.07200000000000001,
-      "730": 0.04,
-      "1500": 0
+      "0": 0.162,
+      "392": 0.098,
+      "1081": 0.028,
+      "2173": 0
     },
     "stoploss": {
-      "stoploss": -0.333
+      "stoploss": -0.023
+    },
+    "trailing": {
+      "trailing_stop": true,
+      "trailing_stop_positive": 0.288,
+      "trailing_stop_positive_offset": 0.364,
+      "trailing_only_offset_is_reached": true
     }
   },
   "ft_stratparam_v": 1,
-  "export_time": "2022-06-11 19:16:57.711395+00:00"
+  "export_time": "2022-06-12 14:02:18.552350+00:00"
 }
