@@ -1,31 +1,31 @@
 {
   "strategy_name": "ours",
   "params": {
-    "buy": {
-      "buy_rsi": 30,
-      "exit_short_rsi": 30
-    },
-    "sell": {
-      "sell_rsi": 70,
-      "short_rsi": 70
-    },
-    "protection": {},
-    "roi": {
-      "0": 0.921,
-      "4821": 0.239,
-      "20873": 0.12,
-      "26135": 0
-    },
-    "stoploss": {
-      "stoploss": -0.268
-    },
     "trailing": {
       "trailing_stop": true,
       "trailing_stop_positive": 0.019,
       "trailing_stop_positive_offset": 0.11,
       "trailing_only_offset_is_reached": true
+    },
+    "buy": {
+      "buy_rsi": 5,
+      "exit_short_rsi": 49
+    },
+    "sell": {
+      "sell_rsi": 88,
+      "short_rsi": 87
+    },
+    "protection": {},
+    "roi": {
+      "0": 0.6819999999999999,
+      "9412": 0.286,
+      "25427": 0.143,
+      "30468": 0
+    },
+    "stoploss": {
+      "stoploss": -0.35
     }
   },
   "ft_stratparam_v": 1,
-  "export_time": "2022-06-12 14:38:03.914328+00:00"
+  "export_time": "2022-06-12 20:51:46.815806+00:00"
 }

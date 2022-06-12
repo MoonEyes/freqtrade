@@ -29,21 +29,21 @@ class ours(IStrategy):
     # Minimal ROI designed for the strategy.
     # This attribute will be overridden if the config file contains "minimal_roi".
     minimal_roi = {
-        "0": 0.921,
-        "4821": 0.239,
-        "20873": 0.12,
-        "26135": 0
+        "0": 0.682,
+        "9412": 0.286,
+        "25427": 0.143,
+        "30468": 0
     }
 
     # Optimal stoploss designed for the strategy.
     # This attribute will be overridden if the config file contains "stoploss".
-    stoploss = -0.268
+    stoploss = -0.35
 
     # Trailing stoploss
-    trailing_stop = True
-    trailing_stop_positive = 0.019
-    trailing_stop_positive_offset = 0.11
-    trailing_only_offset_is_reached = True
+    trailing_stop = True  # value loaded from strategy
+    trailing_stop_positive = 0.019  # value loaded from strategy
+    trailing_stop_positive_offset = 0.11  # value loaded from strategy
+    trailing_only_offset_is_reached = True  # value loaded from strategy
 
     # Optimal timeframe for the strategy.
     timeframe = '1d'
@@ -83,11 +83,12 @@ class ours(IStrategy):
         'main_plot': {
                 'ema21': {'color': 'red'},
                 'ema55': {'color': 'green'},
-                
-           
+                'ema200': {'color': 'blue'},
         },
         'subplots': {
-            
+            "RSI": {
+                'rsi': {'color': 'orange'},
+            }
         }
     }
 
@@ -115,6 +116,10 @@ class ours(IStrategy):
         dataframe['ema50'] = ta.EMA(dataframe['close'], timeperiod=50)
         dataframe['ema55'] = ta.EMA(dataframe['close'], timeperiod=55)
         dataframe['ema100'] = ta.EMA(dataframe['close'], timeperiod=100)
+        dataframe['ema200'] = ta.EMA(dataframe['close'], timeperiod=200)
+
+        # RSI - Relative Strength Index
+        dataframe['rsi'] = ta.RSI(dataframe['close'], timeperiod=55)
         
 
         return dataframe
@@ -123,7 +128,7 @@ class ours(IStrategy):
 
         dataframe.loc[
             (
-                (dataframe['ema21'] > dataframe['ema55']) &
+                (dataframe['close'] > dataframe['ema55']) &
                 (dataframe['close'] > dataframe['ema55'])
             ),
             'enter_long'] = 1
@@ -142,14 +147,16 @@ class ours(IStrategy):
 
         dataframe.loc[
             (   
-                (dataframe['close'] < dataframe['ema21']) 
+                (dataframe['ema21'] < dataframe['ema55']) &
+                (dataframe['close'] < dataframe['ema55'])
             ),
 
             'exit_long'] = 1
 
         dataframe.loc[
             (
-                (dataframe['close'] > dataframe['ema21']) 
+                (dataframe['ema21'] > dataframe['ema55']) &
+                (dataframe['close'] > dataframe['ema55'])
             ),
             'exit_short'] = 1
 

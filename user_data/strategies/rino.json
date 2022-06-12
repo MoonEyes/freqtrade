@@ -1,0 +1,31 @@
+{
+  "strategy_name": "rino",
+  "params": {
+    "trailing": {
+      "trailing_stop": true,
+      "trailing_stop_positive": 0.05,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "buy": {
+      "buy_rsi": 13,
+      "exit_short_rsi": 14
+    },
+    "sell": {
+      "sell_rsi": 53,
+      "short_rsi": 98
+    },
+    "protection": {},
+    "roi": {
+      "0": 0.8140000000000001,
+      "4633": 0.36,
+      "19238": 0.139,
+      "28330": 0
+    },
+    "stoploss": {
+      "stoploss": -0.02
+    }
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2022-06-12 19:50:44.798380+00:00"
+}
