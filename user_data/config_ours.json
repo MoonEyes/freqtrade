@@ -74,9 +74,9 @@
         "remove_pumps": false
     },
     "telegram": {
-        "enabled": false,
+        "enabled": true,
         "token": "5562808410:AAEyPPVkVN8lw42GehqjjeYI5uah6idO36c",
-        "chat_id": "-1806677870",
+        "chat_id": "-743885082",
         "notification_settings": {
             "status": "silent",
             "warning": "on",
@@ -106,13 +106,13 @@
     "api_server": {
         "enabled": true,
         "listen_ip_address": "0.0.0.0",
-        "listen_port": 80,
+        "listen_port": 8080,
         "verbosity": "error",
         "enable_openapi": false,
         "jwt_secret_key": "de6f7bab52bafcbebf5261c93a8415083afd184cb94d5ba3f8a2c024ba792a4d",
         "CORS_origins": [],
-        "username": "BNR_freqtrader",
-        "password": "6WB7AzgvWXAFge2wqO6P"
+        "username": "",
+        "password": ""
     },
     "bot_name": "freqtrade",
     "initial_state": "running",
