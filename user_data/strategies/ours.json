@@ -8,24 +8,24 @@
       "trailing_only_offset_is_reached": true
     },
     "buy": {
-      "buy_rsi": 5,
-      "exit_short_rsi": 49
+      "buy_rsi": 18,
+      "exit_short_rsi": 21
     },
     "sell": {
-      "sell_rsi": 88,
-      "short_rsi": 87
+      "sell_rsi": 60,
+      "short_rsi": 100
     },
     "protection": {},
     "roi": {
-      "0": 0.6819999999999999,
-      "9412": 0.286,
-      "25427": 0.143,
-      "30468": 0
+      "0": 0.543,
+      "9389": 0.20400000000000001,
+      "24042": 0.089,
+      "40255": 0
     },
     "stoploss": {
-      "stoploss": -0.35
+      "stoploss": -0.043
     }
   },
   "ft_stratparam_v": 1,
-  "export_time": "2022-06-12 20:51:46.815806+00:00"
+  "export_time": "2022-06-14 20:21:05.149174+00:00"
 }

@@ -29,15 +29,15 @@ class ours(IStrategy):
     # Minimal ROI designed for the strategy.
     # This attribute will be overridden if the config file contains "minimal_roi".
     minimal_roi = {
-        "0": 0.682,
-        "9412": 0.286,
-        "25427": 0.143,
-        "30468": 0
+        "0": 0.705,
+        "8436": 0.316,
+        "22425": 0.087,
+        "41146": 0
     }
 
     # Optimal stoploss designed for the strategy.
     # This attribute will be overridden if the config file contains "stoploss".
-    stoploss = -0.35
+    stoploss = -0.348
 
     # Trailing stoploss
     trailing_stop = True  # value loaded from strategy
@@ -147,16 +147,14 @@ class ours(IStrategy):
 
         dataframe.loc[
             (   
-                (dataframe['ema21'] < dataframe['ema55']) &
-                (dataframe['close'] < dataframe['ema55'])
+                (dataframe['ema21'] < dataframe['ema55']) 
             ),
 
             'exit_long'] = 1
 
         dataframe.loc[
             (
-                (dataframe['ema21'] > dataframe['ema55']) &
-                (dataframe['close'] > dataframe['ema55'])
+                (dataframe['ema21'] > dataframe['ema55']) 
             ),
             'exit_short'] = 1
 
