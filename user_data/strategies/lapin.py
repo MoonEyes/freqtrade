@@ -13,6 +13,8 @@ from freqtrade.strategy import (BooleanParameter, CategoricalParameter, DecimalP
 # Add your lib to import here
 import talib.abstract as ta
 import freqtrade.vendor.qtpylib.indicators as qtpylib
+from technical.indicators import ichimoku
+
 
 
 # This class is a sample. Feel free to customize it.
@@ -38,30 +40,27 @@ class lapin(IStrategy):
     INTERFACE_VERSION = 3
 
     # Can this strategy go short?
-    can_short: bool = True
+    can_short: bool = False
 
 
     # Minimal ROI designed for the strategy.
     # This attribute will be overridden if the config file contains "minimal_roi".
     minimal_roi = {
-        "0": 0.283,
-        "256": 0.072,
-        "730": 0.04,
-        "1500": 0
+        "0": 1
         }
 
     # Optimal stoploss designed for the strategy.
     # This attribute will be overridden if the config file contains "stoploss".
-    stoploss = -0.333
+    stoploss = -0.1
 
     # Trailing stoploss
-    #trailing_stop = True
-    #trailing_only_offset_is_reached = False
-    #trailing_stop_positive = 0.05
-    #trailing_stop_positive_offset = 0.0  # Disabled / not configured
+    trailing_stop = True
+    trailing_stop_positive = -0.15
+    trailing_stop_positive_offset = 0.20
+    trailing_only_offset_is_reached = True
 
     # Optimal timeframe for the strategy.
-    timeframe = '1h'
+    timeframe = '15m'
 
     # Run "populate_indicators()" only for new candle.
     #process_only_new_candles = False
@@ -96,11 +95,12 @@ class lapin(IStrategy):
 
     plot_config = {
         'main_plot': {
-                #'ema5': {'color': 'blue'},
-                #'ema8': {'color': 'red'},
-                #'ema13': {'color': 'green'},
-                'ema100': {'color': 'blue'},
-                'ema200': {'color': 'orange'},
+                'tenkan': {'color': 'yellow'},
+                'kijun': {'color': 'orange'},
+                'senkou_a': {'color': 'green'},
+                'senkou_b': {'color': 'red'},
+                'cloud_green': {'color': 'green'},
+                'cloud_red': {'color': 'red'},
         },
         'subplots': {
             
@@ -123,16 +123,26 @@ class lapin(IStrategy):
         dataframe['ema200'] = ta.EMA(dataframe['close'], timeperiod=200)
         dataframe['ema100'] = ta.EMA(dataframe['close'], timeperiod=100)
 
+        # Ichimoku Indicators
+        ichi=ichimoku(dataframe)
+        dataframe['tenkan']=ichi['tenkan_sen']
+        dataframe['kijun']=ichi['kijun_sen']
+        dataframe['senkou_a']=ichi['senkou_span_a']
+        dataframe['senkou_b']=ichi['senkou_span_b']
+        dataframe['cloud_green']=ichi['cloud_green']
+        dataframe['cloud_red']=ichi['cloud_red']
+        dataframe['lagging_span']=ichi['lagging_span']
+
         return dataframe
 
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
     
         dataframe.loc[
             (
-                ##(dataframe['ema5'] > dataframe['ema8']) &
-                #(dataframe['ema8'] > dataframe['ema13']) &
-                #(dataframe['high'] > dataframe['ema5']) &
-                (dataframe['close'] > dataframe['ema200'])
+                (dataframe['close'] > dataframe['kijun']) &
+                (dataframe['close'] > dataframe['senkou_a']) &
+                (dataframe['lagging_span'] > dataframe['cloud_green'])
+                (dataframe['cloud_green']==True)
             ),
             'enter_long'] = 1
 
