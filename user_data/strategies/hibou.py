@@ -33,10 +33,10 @@ class hibou(IStrategy):
     # Minimal ROI designed for the strategy.
     # This attribute will be overridden if the config file contains "minimal_roi".
     minimal_roi = {
-        "0": 0.20,
-        "5": 0.15,
-        "10": 0.10,
-        "15": 0.05
+        "0": 1
+        #"5": 0.15,
+        #"10": 0.10,
+        #"15": 0.05
     }
 
     # Optimal stoploss designed for the strategy.
@@ -61,12 +61,13 @@ class hibou(IStrategy):
     ignore_roi_if_entry_signal = False
 
     # Hyperoptable parameters
-    emalow = IntParameter(low=1, high=55, default=21, space='buy', optimize=True, load=True)
+    emalow = IntParameter(low=1, high=55, default=20, space='buy', optimize=True, load=True)
     emahigh = IntParameter(low=10, high=200, default=55, space='buy', optimize=True, load=True)
     emalong = IntParameter(low=55, high=361, default=200, space='buy', optimize=True, load=True)
-    emalongsell = IntParameter(low=55, high=361, default=200, space='sell', optimize=True, load=True)
-    supertrend_m = IntParameter(low=5, high=20, default=15, space='buy', optimize=True, load=True)
-    supertrend_p = IntParameter(low=5, high=100, default=50, space='buy', optimize=True, load=True)
+    supertrend_m = IntParameter(low=5, high=20, default=3, space='buy', optimize=True, load=True)
+    supertrend_p = IntParameter(low=5, high=100, default=10, space='buy', optimize=True, load=True)
+    supertrend_m_sell = IntParameter(low=5, high=20, default=supertrend_m.value, space='buy', optimize=True, load=True)
+    supertrend_p_sell = IntParameter(low=5, high=100, default=supertrend_p.value, space='buy', optimize=True, load=True)
 
     # Number of candles the strategy requires before producing valid signals
     startup_candle_count: int = 55
@@ -116,7 +117,6 @@ class hibou(IStrategy):
         dataframe['emalow'] = ta.EMA(dataframe['close'], timeperiod=self.emalow.value)
         dataframe['emahigh'] = ta.EMA(dataframe['close'], timeperiod=self.emahigh.value)
         dataframe['emalong'] = ta.EMA(dataframe['close'], timeperiod=self.emalong.value)
-        dataframe['emalongsell'] = ta.EMA(dataframe['close'], timeperiod=self.emalongsell.value)
 
         # MA - Moving Average
         dataframe['ma361'] = ta.MA(dataframe['close'], timeperiod=361)
@@ -135,10 +135,11 @@ class hibou(IStrategy):
 
         dataframe.loc[
             (   
-                (dataframe['emalow'] > dataframe['emahigh']) &
-                (dataframe['emahigh'] > dataframe['emalong']) &
-                #(dataframe['low']   < dataframe['emahigh']) &
-                (dataframe['supertrend_1'] == 'up')
+                (dataframe['emalow'] > dataframe['supertrend_1_ST']) &
+                (dataframe['open']   > dataframe['emalow']) &
+                (dataframe['supertrend_1'] == 'up') &
+                (dataframe['close'] > dataframe['emalow'])
+
             ),
             'enter_long'] = 1
 
@@ -148,7 +149,7 @@ class hibou(IStrategy):
 
         dataframe.loc[
             (   
-                (dataframe['close'] < dataframe['emalongsell']) 
+                (dataframe['supertrend_1'] == 'down')  
             ),
 
             'exit_long'] = 1

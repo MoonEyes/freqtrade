@@ -33,10 +33,7 @@ class hiboutest(IStrategy):
     # Minimal ROI designed for the strategy.
     # This attribute will be overridden if the config file contains "minimal_roi".
     minimal_roi = {
-         "0": 0.306,
-        "230": 0.231,
-        "498": 0.082,
-        "1560": 0
+         "0": 1
     }
 
     # Optimal stoploss designed for the strategy.
@@ -44,10 +41,10 @@ class hiboutest(IStrategy):
     stoploss = -0.328
 
     # Trailing stoploss
-    trailing_stop = True
-    trailing_stop_positive = 0.05
-    trailing_stop_positive_offset = 0.144
-    trailing_only_offset_is_reached = False
+    #trailing_stop = True
+    #trailing_stop_positive = 0.05
+    #trailing_stop_positive_offset = 0.144
+    #trailing_only_offset_is_reached = False
 
     # Optimal timeframe for the strategy.
     timeframe = '1h'
@@ -79,23 +76,23 @@ class hiboutest(IStrategy):
         "sell_p2": 18,
         "sell_p3": 18,
     }
-    buy_m1 = IntParameter(1, 7, default=4)
-    buy_m2 = IntParameter(1, 7, default=4)
-    buy_m3 = IntParameter(1, 7, default=4)
-    buy_p1 = IntParameter(7, 21, default=14)
-    buy_p2 = IntParameter(7, 21, default=14)
-    buy_p3 = IntParameter(7, 21, default=14)
+    buy_m1 = IntParameter(1, 7, default=3)
+    buy_m2 = IntParameter(1, 7, default=1)
+    buy_m3 = IntParameter(1, 7, default=2)
+    buy_p1 = IntParameter(7, 21, default=12)
+    buy_p2 = IntParameter(7, 21, default=10)
+    buy_p3 = IntParameter(7, 21, default=11)
 
-    sell_m1 = IntParameter(1, 7, default=4)
-    sell_m2 = IntParameter(1, 7, default=4)
-    sell_m3 = IntParameter(1, 7, default=4)
-    sell_p1 = IntParameter(7, 21, default=14)
-    sell_p2 = IntParameter(7, 21, default=14)
-    sell_p3 = IntParameter(7, 21, default=14)
+    sell_m1 = IntParameter(1, 7, default=3)
+    sell_m2 = IntParameter(1, 7, default=1)
+    sell_m3 = IntParameter(1, 7, default=2)
+    sell_p1 = IntParameter(7, 21, default=12)
+    sell_p2 = IntParameter(7, 21, default=10)
+    sell_p3 = IntParameter(7, 21, default=11)
 
 
     # Number of candles the strategy requires before producing valid signals
-    startup_candle_count: int = 55
+    startup_candle_count: int = 200
 
     # Optional order type mapping.
     order_types = {
@@ -137,6 +134,8 @@ class hiboutest(IStrategy):
         dataframe['trix9'] = ta.TRIX(dataframe['close'], timeperiod=9)
         dataframe['trix15'] = ta.TRIX(dataframe['close'], timeperiod=21)
 
+        dataframe['ema200'] = ta.EMA(dataframe['close'], timeperiod=200)
+
         dataframe['supertrend_1_buy'] = self.supertrend(dataframe, self.buy_m1.value, self.buy_p1.value)['STX']
         dataframe['supertrend_2_buy'] = self.supertrend(dataframe, self.buy_m2.value, self.buy_p2.value)['STX']
         dataframe['supertrend_3_buy'] = self.supertrend(dataframe, self.buy_m3.value, self.buy_p3.value)['STX']
@@ -152,7 +151,8 @@ class hiboutest(IStrategy):
             (   
                (dataframe['supertrend_1_buy'] == 'up') &
                (dataframe['supertrend_2_buy'] == 'up') & 
-               (dataframe['supertrend_3_buy'] == 'up') &  # The three indicators are 'up' for the current candle
+               (dataframe['supertrend_3_buy'] == 'up') & 
+               (dataframe['close'] > dataframe['ema200'] )& # The three indicators are 'up' for the current candle
                (dataframe['volume'] > 0) # There is at least some trading volume
             ),
             'enter_long'] = 1
@@ -163,10 +163,7 @@ class hiboutest(IStrategy):
 
         dataframe.loc[
             (   
-               (dataframe['supertrend_1_sell'] == 'up') &
-               (dataframe['supertrend_2_sell'] == 'up') & 
-               (dataframe['supertrend_3_sell'] == 'up') &  
-               (dataframe['volume'] > 0) # There is at least some trading volume
+               (dataframe['close'] < dataframe['ema200'] )
             ),
 
             'exit_long'] = 1
