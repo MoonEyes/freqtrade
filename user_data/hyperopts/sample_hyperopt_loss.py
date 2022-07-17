@@ -11,7 +11,7 @@ from freqtrade.optimize.hyperopt import IHyperOptLoss
 
 # set TARGET_TRADES to suit your number concurrent trades so its realistic
 # to the number of days
-TARGET_TRADES = 1200
+TARGET_TRADES = 5000
 # This is assumed to be expected avg profit * expected trade count.
 # For example, for 0.35% avg per trade (or 0.0035 as ratio) and 1100 trades,
 # self.expected_max_profit = 3.85

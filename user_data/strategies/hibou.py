@@ -66,8 +66,8 @@ class hibou(IStrategy):
     emalong = IntParameter(low=55, high=361, default=200, space='buy', optimize=True, load=True)
     supertrend_m = IntParameter(low=5, high=20, default=3, space='buy', optimize=True, load=True)
     supertrend_p = IntParameter(low=5, high=100, default=10, space='buy', optimize=True, load=True)
-    supertrend_m_sell = IntParameter(low=5, high=20, default=supertrend_m.value, space='buy', optimize=True, load=True)
-    supertrend_p_sell = IntParameter(low=5, high=100, default=supertrend_p.value, space='buy', optimize=True, load=True)
+    supertrend_m_sell = IntParameter(low=5, high=20, default=supertrend_m.value, space='sell', optimize=True, load=True)
+    supertrend_p_sell = IntParameter(low=5, high=100, default=supertrend_p.value, space='sell', optimize=True, load=True)
 
     # Number of candles the strategy requires before producing valid signals
     startup_candle_count: int = 55
