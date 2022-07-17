@@ -1,3 +1,7 @@
+###############################################################################
+# Strategy Trix
+###############################################################################
+
 # pragma pylint: disable=missing-docstring, invalid-name, pointless-string-statement
 # flake8: noqa: F401
 # isort: skip_file
@@ -23,7 +27,7 @@ class rino(IStrategy):
     INTERFACE_VERSION = 3
 
     # Can this strategy go short?
-    can_short: bool = True
+    can_short: bool = False
 
 
     # Minimal ROI designed for the strategy.
@@ -101,13 +105,6 @@ class rino(IStrategy):
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         
         # Momentum Indicators
-        # ------------------------------------
-        # EMA - Exponential Moving Average
-        dataframe['ema5'] = ta.EMA(dataframe['close'], timeperiod=5)
-        dataframe['ema8'] = ta.EMA(dataframe['close'], timeperiod=8)
-        dataframe['ema13'] = ta.EMA(dataframe['close'], timeperiod=13)
-        dataframe['ema200'] = ta.EMA(dataframe['close'], timeperiod=200)
-        dataframe['ema100'] = ta.EMA(dataframe['close'], timeperiod=100)
 
         # Trix - Triple Exponential Average
         dataframe['trix14'] = ta.TRIX(dataframe['close'], timeperiod=14)

@@ -1,26 +1,26 @@
 
 {
-    "max_open_trades" : 15,
+    "max_open_trades" : 3,
     "stake_currency": "USDT",
     "stake_amount": "unlimited",
-    //"tradable_balance_ratio": 0.70,
+    "tradable_balance_ratio": 0.3,
     "fiat_display_currency": "USD",
     "dry_run": true,
     "dry_run_wallet": 350,
     "cancel_open_orders_on_exit" : true,
-    "trading_mode": "futures",
+    "trading_mode": "spot",
     "margin_mode": "isolated",
-    "liquidation_buffer": 0.05,
+    //"liquidation_buffer": 0.05,
     "unfilledtimeout": {
-        "entry": 10,
-        "exit": 10,
+        "entry": 30,
+        "exit": 30,
         "exit_timeout_count": 0,
         "unit": "minutes"
     },
     "entry_pricing": {
         "price_side": "same",
         "use_order_book": true,
-        "order_book_top": 1,
+        "order_book_top": 10,
         "price_last_balance": 0.0,
         "check_depth_of_market": {
             "enabled": false,
@@ -33,7 +33,7 @@
         "order_book_top": 1
     },
     "exchange": {
-        "name": "binance",
+        "name": "ftx",
         "key": "",
         "secret": "",
         "ccxt_config": {},
@@ -41,10 +41,14 @@
         "pair_whitelist": [
             "BTC/USDT",
             "ETH/USDT",
-           
-
-            
-
+            "AVAX/USDT",
+            "SOL/USDT",
+            "BNB/USDT",
+            "XRP/USDT",
+            "DOT/USDT",
+            "UNI/USDT",
+            "FTT/USDT",
+            "NEAR/USDT"
         ],
         "pair_blacklist": [
 

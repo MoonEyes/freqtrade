@@ -1,3 +1,7 @@
+###############################################################################
+# Strategy EMA
+###############################################################################
+
 # pragma pylint: disable=missing-docstring, invalid-name, pointless-string-statement
 # flake8: noqa: F401
 # isort: skip_file
@@ -23,16 +27,16 @@ class ours(IStrategy):
     INTERFACE_VERSION = 3
 
     # Can this strategy go short?
-    can_short: bool = True
+    can_short: bool = False
 
 
     # Minimal ROI designed for the strategy.
     # This attribute will be overridden if the config file contains "minimal_roi".
     minimal_roi = {
-        "0": 0.705,
-        "8436": 0.316,
-        "22425": 0.087,
-        "41146": 0
+        "0": 0.20,
+        "5": 0.15,
+        "10": 0.10,
+        "15": 0.05
     }
 
     # Optimal stoploss designed for the strategy.
@@ -40,13 +44,13 @@ class ours(IStrategy):
     stoploss = -0.348
 
     # Trailing stoploss
-    trailing_stop = True  # value loaded from strategy
-    trailing_stop_positive = 0.019  # value loaded from strategy
-    trailing_stop_positive_offset = 0.11  # value loaded from strategy
-    trailing_only_offset_is_reached = True  # value loaded from strategy
+    #trailing_stop = True  # value loaded from strategy
+    #trailing_stop_positive = 0.019  # value loaded from strategy
+    #trailing_stop_positive_offset = 0.11  # value loaded from strategy
+    #trailing_only_offset_is_reached = True  # value loaded from strategy
 
     # Optimal timeframe for the strategy.
-    timeframe = '1d'
+    timeframe = '1h'
 
     # Run "populate_indicators()" only for new candle.
     process_only_new_candles = False
@@ -57,10 +61,9 @@ class ours(IStrategy):
     ignore_roi_if_entry_signal = False
 
     # Hyperoptable parameters
-    buy_rsi = IntParameter(low=1, high=50, default=30, space='buy', optimize=True, load=True)
-    sell_rsi = IntParameter(low=50, high=100, default=70, space='sell', optimize=True, load=True)
-    short_rsi = IntParameter(low=51, high=100, default=70, space='sell', optimize=True, load=True)
-    exit_short_rsi = IntParameter(low=1, high=50, default=30, space='buy', optimize=True, load=True)
+    emalow = IntParameter(low=1, high=55, default=21, space='buy', optimize=True, load=True)
+    emahigh = IntParameter(low=10, high=200, default=55, space='buy', optimize=True, load=True)
+    emalong = IntParameter(low=55, high=361, default=200, space='buy', optimize=True, load=True)
 
     # Number of candles the strategy requires before producing valid signals
     startup_candle_count: int = 55
@@ -81,9 +84,9 @@ class ours(IStrategy):
 
     plot_config = {
         'main_plot': {
-                'ema21': {'color': 'red'},
-                'ema55': {'color': 'green'},
-                'ema200': {'color': 'blue'},
+                'emalow': {'color': 'red'},
+                'emahigh': {'color': 'green'},
+                'emalong': {'color': 'blue'},
         },
         'subplots': {
             "RSI": {
@@ -103,20 +106,23 @@ class ours(IStrategy):
 
         # TRIX
         dataframe['trix9'] = ta.TRIX(dataframe['close'], timeperiod=9)
-        dataframe['trix15'] = ta.TRIX(dataframe['close'], timeperiod=15)
+        dataframe['trix15'] = ta.TRIX(dataframe['close'], timeperiod=21)
 
         # EMA - Exponential Moving Average
         dataframe['ema15'] = ta.EMA(dataframe['close'], timeperiod=15)
         dataframe['ema20'] = ta.EMA(dataframe['close'], timeperiod=20)
-        dataframe['ema21'] = ta.EMA(dataframe['close'], timeperiod=21)
+        dataframe['emalow'] = ta.EMA(dataframe['close'], timeperiod=21)
         dataframe['ema25'] = ta.EMA(dataframe['close'], timeperiod=25)
         dataframe['ema30'] = ta.EMA(dataframe['close'], timeperiod=30)
         dataframe['ema40'] = ta.EMA(dataframe['close'], timeperiod=40)
         dataframe['ema45'] = ta.EMA(dataframe['close'], timeperiod=45)
         dataframe['ema50'] = ta.EMA(dataframe['close'], timeperiod=50)
-        dataframe['ema55'] = ta.EMA(dataframe['close'], timeperiod=55)
+        dataframe['emahigh'] = ta.EMA(dataframe['close'], timeperiod=55)
         dataframe['ema100'] = ta.EMA(dataframe['close'], timeperiod=100)
-        dataframe['ema200'] = ta.EMA(dataframe['close'], timeperiod=200)
+        dataframe['emalong'] = ta.EMA(dataframe['close'], timeperiod=200)
+
+        # MA - Moving Average
+        dataframe['ma361'] = ta.MA(dataframe['close'], timeperiod=361)
 
         # RSI - Relative Strength Index
         dataframe['rsi'] = ta.RSI(dataframe['close'], timeperiod=55)
@@ -127,19 +133,12 @@ class ours(IStrategy):
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
         dataframe.loc[
-            (
-                (dataframe['close'] > dataframe['ema55']) &
-                (dataframe['close'] > dataframe['ema55'])
+            (   
+                (dataframe['emalow'] > dataframe['emahigh']) &
+                (dataframe['emahigh'] > dataframe['emalong']) &
+                (dataframe['low']   < dataframe['emalong'])
             ),
             'enter_long'] = 1
-
-        dataframe.loc[
-            (
-                (dataframe['ema21'] < dataframe['ema55']) &
-                (dataframe['close'] < dataframe['ema55'])
-                
-            ),
-            'enter_short'] = 1
 
         return dataframe
 
@@ -147,15 +146,9 @@ class ours(IStrategy):
 
         dataframe.loc[
             (   
-                (dataframe['ema21'] < dataframe['ema55']) 
+                (dataframe['low'] < dataframe['emahigh']) 
             ),
 
             'exit_long'] = 1
-
-        dataframe.loc[
-            (
-                (dataframe['ema21'] > dataframe['ema55']) 
-            ),
-            'exit_short'] = 1
 
         return dataframe
