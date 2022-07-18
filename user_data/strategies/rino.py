@@ -140,16 +140,16 @@ class rino(IStrategy):
 
         dataframe.loc[
             (   
-               (dataframe['trix13'] < dataframe['trix34']) &
-               (qtpylib.crossed_above(dataframe['rsi'], self.sell_rsi.value)) 
+               (dataframe['trix13'] < dataframe['trix34']) 
+               #(qtpylib.crossed_above(dataframe['rsi'], self.sell_rsi.value)) 
             ),
 
             'exit_long'] = 1
 
         dataframe.loc[
             (
-                (dataframe['trix13'] > dataframe['trix34']) &
-                (qtpylib.crossed_above(dataframe['rsi'], self.exit_short_rsi.value)) 
+                (dataframe['trix13'] > dataframe['trix34']) 
+                #(qtpylib.crossed_above(dataframe['rsi'], self.exit_short_rsi.value)) 
             ),
             'exit_short'] = 1
 

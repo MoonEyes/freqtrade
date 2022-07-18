@@ -1,7 +1,7 @@
 
 {
     "max_open_trades" : 15,
-    "stake_currency": "USDT",
+    "stake_currency": "USD",
     "stake_amount": "unlimited",
     //"tradable_balance_ratio": 0.70,
     "fiat_display_currency": "USD",
@@ -39,9 +39,11 @@
         "ccxt_config": {},
         "ccxt_async_config": {},
         "pair_whitelist": [
-            //"BTC/USDT",
-            "ETH/USDT",
-           
+           "AVAX/USD",
+           "UNI/USD",
+           "LINK/USD",
+           "AAVE/USD",
+           "MKR/USD"
 
             
 

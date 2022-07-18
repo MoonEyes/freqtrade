@@ -136,7 +136,7 @@ class ours(IStrategy):
             (   
                 (dataframe['emalow'] > dataframe['emahigh']) &
                 (dataframe['emahigh'] > dataframe['emalong']) &
-                (dataframe['low']   < dataframe['emalong'])
+                (dataframe['close']   < dataframe['emahigh'])
             ),
             'enter_long'] = 1
 
@@ -146,7 +146,7 @@ class ours(IStrategy):
 
         dataframe.loc[
             (   
-                (dataframe['low'] < dataframe['emahigh']) 
+                (dataframe['emalow'] < dataframe['emahigh']) 
             ),
 
             'exit_long'] = 1

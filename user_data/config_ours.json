@@ -41,14 +41,10 @@
         "pair_whitelist": [
             "BTC/USDT",
             "ETH/USDT",
-            "AVAX/USDT",
             "SOL/USDT",
             "BNB/USDT",
-            "XRP/USDT",
-            "DOT/USDT",
             "UNI/USDT",
-            "FTT/USDT",
-            "NEAR/USDT"
+            "FTT/USDT"
         ],
         "pair_blacklist": [
 

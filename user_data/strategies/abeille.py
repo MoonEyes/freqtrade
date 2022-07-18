@@ -58,30 +58,14 @@ class abeille(IStrategy):
     ignore_roi_if_entry_signal = False
 
     # Hyperoptable parameters
-    buy_params = {
-        "buy_m1": 4,
-        "buy_m2": 7,
-        "buy_m3": 1,
-        "buy_p1": 8,
-        "buy_p2": 9,
-        "buy_p3": 8,
-    }
-
-    # Sell hyperspace params:
-    sell_params = {
-        "sell_m1": 1,
-        "sell_m2": 3,
-        "sell_m3": 6,
-        "sell_p1": 16,
-        "sell_p2": 18,
-        "sell_p3": 18,
-    }
+  
     buy_m1 = IntParameter(1, 7, default=3)
     buy_m2 = IntParameter(1, 7, default=1)
     buy_m3 = IntParameter(1, 7, default=2)
     buy_p1 = IntParameter(7, 21, default=12)
     buy_p2 = IntParameter(7, 21, default=10)
     buy_p3 = IntParameter(7, 21, default=11)
+    ema = IntParameter(1, 361, default=200,space='sell', optimize=True, load=True)
 
 
 
@@ -105,14 +89,12 @@ class abeille(IStrategy):
 
     plot_config = {
         'main_plot': {
-                'emalow': {'color': 'red'},
-                'emahigh': {'color': 'green'},
-                'emalong': {'color': 'blue'},
+                'supertrend_1_buy_ST': {'color': 'red'},
+                'supertrend_2_buy_ST': {'color': 'green'},
+                'supertrend_3_buy_ST': {'color': 'blue'},
+                'ema200': {'color': 'orange'},
         },
         'subplots': {
-            "RSI": {
-                'rsi': {'color': 'orange'},
-            }
         }
     }
 
@@ -125,11 +107,14 @@ class abeille(IStrategy):
         # Momentum Indicators
         # -----------------------------------
 
-        dataframe['ema200'] = ta.EMA(dataframe['close'], timeperiod=200)
+        dataframe['ema200'] = ta.EMA(dataframe['close'], timeperiod=self.ema.value)
 
         dataframe['supertrend_1_buy'] = self.supertrend(dataframe, self.buy_m1.value, self.buy_p1.value)['STX']
         dataframe['supertrend_2_buy'] = self.supertrend(dataframe, self.buy_m2.value, self.buy_p2.value)['STX']
         dataframe['supertrend_3_buy'] = self.supertrend(dataframe, self.buy_m3.value, self.buy_p3.value)['STX']
+        dataframe['supertrend_1_buy_ST'] = self.supertrend(dataframe, self.buy_m1.value, self.buy_p1.value)['ST']
+        dataframe['supertrend_2_buy_ST'] = self.supertrend(dataframe, self.buy_m2.value, self.buy_p2.value)['ST']
+        dataframe['supertrend_3_buy_ST'] = self.supertrend(dataframe, self.buy_m3.value, self.buy_p3.value)['ST']
        
         return dataframe
 
