@@ -1,9 +1,9 @@
 
 {
-    "max_open_trades" : 10,
+    "max_open_trades" : 3,
     "stake_currency": "USD",
     "stake_amount": "unlimited",
-    "tradable_balance_ratio": 0.2,
+    "tradable_balance_ratio": 0.3,
     "fiat_display_currency": "USD",
     "dry_run": true,
     "dry_run_wallet": 350,
@@ -39,13 +39,7 @@
         "ccxt_config": {},
         "ccxt_async_config": {},
         "pair_whitelist": [
-            "BTC/USD",
-            "ETH/USD",
-            "SOL/USD",
-            "BNB/USD",
-            "UNI/USD",
-            "FTT/USD",
-            "CRV/USD"
+            "BTC/USD"
 
         ],
         "pair_blacklist": [

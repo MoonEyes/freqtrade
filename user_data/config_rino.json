@@ -39,14 +39,7 @@
         "ccxt_config": {},
         "ccxt_async_config": {},
         "pair_whitelist": [
-           "AVAX/USD",
-           "UNI/USD",
-           "LINK/USD",
-           "AAVE/USD",
-           "MKR/USD"
-
-            
-
+            "ETH/USD"
         ],
         "pair_blacklist": [
 

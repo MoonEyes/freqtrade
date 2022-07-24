@@ -136,7 +136,6 @@ class hibou(IStrategy):
         dataframe.loc[
             (   
                 (dataframe['emalow'] > dataframe['supertrend_1_ST']) &
-                (dataframe['open']   > dataframe['emalow']) &
                 (dataframe['supertrend_1'] == 'up') &
                 (dataframe['close'] > dataframe['emalow'])
 

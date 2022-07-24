@@ -33,7 +33,7 @@ class abeille(IStrategy):
     # Minimal ROI designed for the strategy.
     # This attribute will be overridden if the config file contains "minimal_roi".
     minimal_roi = {
-         "0": 1
+         "0": 10
     }
 
     # Optimal stoploss designed for the strategy.
@@ -59,12 +59,12 @@ class abeille(IStrategy):
 
     # Hyperoptable parameters
   
-    buy_m1 = IntParameter(1, 7, default=3)
-    buy_m2 = IntParameter(1, 7, default=1)
-    buy_m3 = IntParameter(1, 7, default=2)
-    buy_p1 = IntParameter(7, 21, default=12)
-    buy_p2 = IntParameter(7, 21, default=10)
-    buy_p3 = IntParameter(7, 21, default=11)
+    buy_m1 = IntParameter(1, 7, default=1)
+    buy_m2 = IntParameter(1, 7, default=2)
+    buy_m3 = IntParameter(1, 7, default=3)
+    buy_p1 = IntParameter(7, 21, default=9)
+    buy_p2 = IntParameter(7, 21, default=11)
+    buy_p3 = IntParameter(7, 21, default=15)
     ema = IntParameter(1, 361, default=200,space='sell', optimize=True, load=True)
 
 

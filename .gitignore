@@ -14,6 +14,7 @@ freqtrade-plot.html
 freqtrade-profit-plot.html
 freqtrade/rpc/api_server/ui/*
 *.fthypt
+*.pkl
 
 # Macos related
 .DS_Store

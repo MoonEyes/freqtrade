@@ -33,10 +33,7 @@ class ours(IStrategy):
     # Minimal ROI designed for the strategy.
     # This attribute will be overridden if the config file contains "minimal_roi".
     minimal_roi = {
-        "0": 0.20,
-        "5": 0.15,
-        "10": 0.10,
-        "15": 0.05
+        "0": 10
     }
 
     # Optimal stoploss designed for the strategy.
@@ -50,7 +47,7 @@ class ours(IStrategy):
     #trailing_only_offset_is_reached = True  # value loaded from strategy
 
     # Optimal timeframe for the strategy.
-    timeframe = '1h'
+    timeframe = '1m'
 
     # Run "populate_indicators()" only for new candle.
     process_only_new_candles = False
@@ -64,6 +61,7 @@ class ours(IStrategy):
     emalow = IntParameter(low=1, high=55, default=21, space='buy', optimize=True, load=True)
     emahigh = IntParameter(low=10, high=200, default=55, space='buy', optimize=True, load=True)
     emalong = IntParameter(low=55, high=361, default=200, space='buy', optimize=True, load=True)
+    emaverylow = IntParameter(low=9, high=90, default=15, space='sell', optimize=True, load=True)
 
     # Number of candles the strategy requires before producing valid signals
     startup_candle_count: int = 55
@@ -105,11 +103,11 @@ class ours(IStrategy):
         # ------------------------------------
 
         # TRIX
-        dataframe['trix9'] = ta.TRIX(dataframe['close'], timeperiod=9)
+        dataframe['trix9'] = ta.TRIX(dataframe['close'], timeperiod=15)
         dataframe['trix15'] = ta.TRIX(dataframe['close'], timeperiod=21)
 
         # EMA - Exponential Moving Average
-        dataframe['ema15'] = ta.EMA(dataframe['close'], timeperiod=15)
+        dataframe['emaverylow'] = ta.EMA(dataframe['close'], timeperiod=9)
         dataframe['ema20'] = ta.EMA(dataframe['close'], timeperiod=20)
         dataframe['emalow'] = ta.EMA(dataframe['close'], timeperiod=21)
         dataframe['ema25'] = ta.EMA(dataframe['close'], timeperiod=25)
@@ -135,8 +133,7 @@ class ours(IStrategy):
         dataframe.loc[
             (   
                 (dataframe['emalow'] > dataframe['emahigh']) &
-                (dataframe['emahigh'] > dataframe['emalong']) &
-                (dataframe['close']   < dataframe['emahigh'])
+                (dataframe['emahigh'] > dataframe['emalong']) 
             ),
             'enter_long'] = 1
 
@@ -146,7 +143,7 @@ class ours(IStrategy):
 
         dataframe.loc[
             (   
-                (dataframe['emalow'] < dataframe['emahigh']) 
+                (dataframe['emaverylow'] < dataframe['emalow']) 
             ),
 
             'exit_long'] = 1
