@@ -27,13 +27,13 @@ class ours(IStrategy):
     INTERFACE_VERSION = 3
 
     # Can this strategy go short?
-    can_short: bool = False
+    can_short: bool = True
 
 
     # Minimal ROI designed for the strategy.
     # This attribute will be overridden if the config file contains "minimal_roi".
     minimal_roi = {
-        "0": 10
+        "0": 1
     }
 
     # Optimal stoploss designed for the strategy.
@@ -47,7 +47,7 @@ class ours(IStrategy):
     #trailing_only_offset_is_reached = True  # value loaded from strategy
 
     # Optimal timeframe for the strategy.
-    timeframe = '1m'
+    timeframe = '1h'
 
     # Run "populate_indicators()" only for new candle.
     process_only_new_candles = False
@@ -85,11 +85,9 @@ class ours(IStrategy):
                 'emalow': {'color': 'red'},
                 'emahigh': {'color': 'green'},
                 'emalong': {'color': 'blue'},
+                'emaverylow': {'color' : 'orange'},
         },
         'subplots': {
-            "RSI": {
-                'rsi': {'color': 'orange'},
-            }
         }
     }
 
@@ -108,22 +106,10 @@ class ours(IStrategy):
 
         # EMA - Exponential Moving Average
         dataframe['emaverylow'] = ta.EMA(dataframe['close'], timeperiod=9)
-        dataframe['ema20'] = ta.EMA(dataframe['close'], timeperiod=20)
         dataframe['emalow'] = ta.EMA(dataframe['close'], timeperiod=21)
-        dataframe['ema25'] = ta.EMA(dataframe['close'], timeperiod=25)
-        dataframe['ema30'] = ta.EMA(dataframe['close'], timeperiod=30)
-        dataframe['ema40'] = ta.EMA(dataframe['close'], timeperiod=40)
-        dataframe['ema45'] = ta.EMA(dataframe['close'], timeperiod=45)
-        dataframe['ema50'] = ta.EMA(dataframe['close'], timeperiod=50)
         dataframe['emahigh'] = ta.EMA(dataframe['close'], timeperiod=55)
-        dataframe['ema100'] = ta.EMA(dataframe['close'], timeperiod=100)
         dataframe['emalong'] = ta.EMA(dataframe['close'], timeperiod=200)
 
-        # MA - Moving Average
-        dataframe['ma361'] = ta.MA(dataframe['close'], timeperiod=361)
-
-        # RSI - Relative Strength Index
-        dataframe['rsi'] = ta.RSI(dataframe['close'], timeperiod=55)
         
 
         return dataframe
@@ -133,9 +119,18 @@ class ours(IStrategy):
         dataframe.loc[
             (   
                 (dataframe['emalow'] > dataframe['emahigh']) &
-                (dataframe['emahigh'] > dataframe['emalong']) 
+                (dataframe['emahigh'] > dataframe['emalong']) &
+                (dataframe['low'] > dataframe['emahigh'] )
             ),
             'enter_long'] = 1
+        
+        dataframe.loc[
+            (
+                (dataframe['emalow'] < dataframe['emahigh']) &
+                (dataframe['emahigh'] < dataframe['emalong']) &
+                (dataframe['low'] < dataframe['emahigh'] )
+            ),
+            'enter_short'] = 1
 
         return dataframe
 
@@ -147,5 +142,11 @@ class ours(IStrategy):
             ),
 
             'exit_long'] = 1
+
+        dataframe.loc[
+            (
+                (dataframe['emaverylow'] > dataframe['emalow']) 
+            ),
+            'exit_short'] = 1
 
         return dataframe
