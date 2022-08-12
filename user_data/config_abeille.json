@@ -1,9 +1,9 @@
 
 {
-    "max_open_trades" : 3,
+    "max_open_trades" : 1,
     "stake_currency": "USD",
     "stake_amount": "unlimited",
-    "tradable_balance_ratio": 0.3,
+    "tradable_balance_ratio": 0.99,
     "fiat_display_currency": "USD",
     "dry_run": true,
     "dry_run_wallet": 350,
@@ -39,7 +39,31 @@
         "ccxt_config": {},
         "ccxt_async_config": {},
         "pair_whitelist": [
-            "BTC/USD"
+            "DOGE/USD",
+            "CHZ/USD",
+            "AXS/USD",
+            "BNB/USD",
+            "MATIC/USD",
+            "SOL/USD",
+            "YFI/USD",
+            "WAVES/USD",
+            "AAVE/USD",
+            "SAND/USD",
+            "FTM/USD",
+            "SHIB/USD",
+            "FTT/USD",
+            "XRP/USD",
+            "ETH/USD",
+            "BTC/USD",
+            "RAY/USD",
+            "UNI/USD",
+            "SUSHI/USD",
+            "SRM/USD",
+            "LINK/USD",
+            "MANA/USD",
+            "LTC/USD",
+            "TRX/USD",
+
 
         ],
         "pair_blacklist": [
