@@ -130,6 +130,16 @@ class abeille(IStrategy):
             ),
             'enter_long'] = 1
 
+        dataframe.loc[
+            (   
+               (dataframe['supertrend_1_buy'] == 'down') &
+               (dataframe['supertrend_2_buy'] == 'down') & 
+               (dataframe['supertrend_3_buy'] == 'down') & 
+               (dataframe['close'] < dataframe['ema200'] )& # The three indicators are 'up' for the current candle
+               (dataframe['volume'] > 0) # There is at least some trading volume
+            ),
+            'enter_short'] = 1
+
         return dataframe
 
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
@@ -140,6 +150,14 @@ class abeille(IStrategy):
             ),
 
             'exit_long'] = 1
+
+        dataframe.loc[
+            (   
+               (dataframe['close'] > dataframe['ema200'] )
+            ),
+
+            'exit_short'] = 1
+
 
         return dataframe
 

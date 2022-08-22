@@ -44,7 +44,7 @@ class lapin(IStrategy):
     trailing_only_offset_is_reached = True
 
     # Optimal timeframe for the strategy.
-    timeframe = '15m'
+    timeframe = '1d'
 
     # Run "populate_indicators()" only for new candle.
     #process_only_new_candles = False
@@ -132,10 +132,10 @@ class lapin(IStrategy):
 
         dataframe.loc[
             (
-                #(dataframe['ema5'] < dataframe['ema8']) &
-                #(dataframe['ema8'] < dataframe['ema13']) &
-                #(dataframe['low'] < dataframe['ema5']) 
-                (dataframe['close'] < dataframe['ema200']) 
+                (dataframe['close'] < dataframe['kijun']) &
+                (dataframe['close'] < dataframe['senkou_a']) &
+                (dataframe['lagging_span'] > dataframe['cloud_red'])
+                (dataframe['cloud_red']==True)
                 
             ),
             'enter_short'] = 1

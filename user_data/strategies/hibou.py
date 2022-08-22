@@ -142,6 +142,14 @@ class hibou(IStrategy):
             ),
             'enter_long'] = 1
 
+        dataframe.loc[
+            (
+                (dataframe['emalow'] < dataframe['supertrend_1_ST']) &
+                (dataframe['supertrend_1'] == 'down') &
+                (dataframe['close'] < dataframe['emalow'])
+            ),
+            'enter_short'] = 1
+
         return dataframe
 
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
@@ -152,6 +160,13 @@ class hibou(IStrategy):
             ),
 
             'exit_long'] = 1
+
+        dataframe.loc[
+            (   
+                (dataframe['supertrend_1'] == 'up')  
+            ),
+
+            'exit_short'] = 1
 
         return dataframe
 
