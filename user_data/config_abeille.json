@@ -127,13 +127,14 @@
     "api_server": {
         "enabled": true,
         "listen_ip_address": "0.0.0.0",
-        "listen_port": 8080,
+        "listen_port": 8082,
         "verbosity": "error",
         "enable_openapi": false,
         "jwt_secret_key": "de6f7bab52bafcbebf5261c93a8415083afd184cb94d5ba3f8a2c024ba792a4d",
-        "CORS_origins": [],
-        "username": "",
-        "password": ""
+        "CORS_origins": ["http://54.216.122.196:8080"],
+        "username": "mooneyes",
+        "password": "mooneyes!12344"
+
     },
     "bot_name": "freqtrade",
     "initial_state": "running",

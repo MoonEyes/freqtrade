@@ -122,7 +122,7 @@ class ours(IStrategy):
                 (dataframe['emahigh'] > dataframe['emalong']) &
                 (dataframe['low'] > dataframe['emahigh'] )
             ),
-            'enter_long'] = 1
+            ['enter_long','ours']] = 1
         
         dataframe.loc[
             (
@@ -130,7 +130,7 @@ class ours(IStrategy):
                 (dataframe['emahigh'] < dataframe['emalong']) &
                 (dataframe['low'] < dataframe['emahigh'] )
             ),
-            'enter_short'] = 1
+            ['enter_short','ours']] = 1
 
         return dataframe
 
@@ -141,12 +141,12 @@ class ours(IStrategy):
                 (dataframe['emaverylow'] < dataframe['emalow']) 
             ),
 
-            'exit_long'] = 1
+            ['exit_long','ours']] = 1
 
         dataframe.loc[
             (
                 (dataframe['emaverylow'] > dataframe['emalow']) 
             ),
-            'exit_short'] = 1
+            ['exit_short','ours']] = 1
 
         return dataframe

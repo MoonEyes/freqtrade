@@ -3,7 +3,7 @@
     "max_open_trades" : 1,
     "stake_currency": "USDT",
     "stake_amount": "unlimited",
-    //"tradable_balance_ratio": 0.70,
+    "tradable_balance_ratio": 0.99,
     "fiat_display_currency": "USD",
     "dry_run": true,
     "dry_run_wallet": 350,
@@ -74,20 +74,45 @@
         "remove_pumps": false
     },
     "telegram": {
-        "enabled": false,
-        "token": "",
-        "chat_id": ""
+        "enabled": true,
+        "token": "5562808410:AAEyPPVkVN8lw42GehqjjeYI5uah6idO36c",
+        "chat_id": "-743885082",
+        "notification_settings": {
+            "status": "silent",
+            "warning": "on",
+            "startup": "off",
+            "entry": "silent",
+            "exit": {
+                "roi": "silent",
+                "emergency_exit": "on",
+                "force_exit": "on",
+                "exit_signal": "silent",
+                "trailing_stop_loss": "on",
+                "stop_loss": "on",
+                "stoploss_on_exchange": "on",
+                "custom_exit": "silent"
+            },
+            "entry_cancel": "silent",
+            "exit_cancel": "on",
+            "entry_fill": "off",
+            "exit_fill": "off",
+            "protection_trigger": "off",
+            "protection_trigger_global": "on"
+        },
+        "reload": true,
+        "balance_dust_level": 0.01
     },
+
     "api_server": {
         "enabled": true,
         "listen_ip_address": "0.0.0.0",
-        "listen_port": 8080,
+        "listen_port": 8083,
         "verbosity": "error",
         "enable_openapi": false,
         "jwt_secret_key": "de6f7bab52bafcbebf5261c93a8415083afd184cb94d5ba3f8a2c024ba792a4d",
-        "CORS_origins": [],
-        "username": "freqtrader",
-        "password": "freqtrader"
+        "CORS_origins": ["http://54.216.122.196:8080"],
+        "username": "mooneyes",
+        "password": "mooneyes!12344"
     },
     "bot_name": "freqtrade",
     "initial_state": "running",
