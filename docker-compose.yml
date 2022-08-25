@@ -37,7 +37,7 @@ services:
     volumes:
       - "./user_data:/freqtrade/user_data"
     ports:
-      - "127.0.0.1:8081:8080"
+      - "127.0.0.1:8081:8081"
     command: >
       trade
       --logfile /freqtrade/user_data/logs/freqtrade_hibou.log
@@ -55,7 +55,7 @@ services:
     volumes:
       - "./user_data:/freqtrade/user_data"
     ports:
-      - "127.0.0.1:8082:8080"
+      - "127.0.0.1:8082:8082"
     command: >
       trade
       --logfile /freqtrade/user_data/logs/freqtrade_abeille.log
@@ -74,7 +74,7 @@ services:
     volumes:
       - "./user_data:/freqtrade/user_data"
     ports:
-      - "127.0.0.1:8083:8080"
+      - "127.0.0.1:8083:8083"
     command: >
       trade
       --logfile /freqtrade/user_data/logs/freqtrade_lapin.log
@@ -92,7 +92,7 @@ services:
     volumes:
       - "./user_data:/freqtrade/user_data"
     ports:
-      - "127.0.0.1:8084:8080"
+      - "127.0.0.1:8084:8084"
     command: >
       trade
       --logfile /freqtrade/user_data/logs/freqtrade_rino.log
