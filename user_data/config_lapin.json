@@ -39,10 +39,29 @@
         "ccxt_config": {},
         "ccxt_async_config": {},
         "pair_whitelist": [
-            "BTC/USDT",
+            "DOGE/USDT",
+            "CHZ/USDT",
+            "AXS/USDT",
+            "BNB/USDT",
+            "MATIC/USDT",
+            "SOL/USDT",
+            "YFI/USDT",
+            "WAVES/USDT",
+            "AAVE/USDT",
+            "SAND/USDT",
+            "FTM/USDT",
+            "FTT/USDT",
+            "XRP/USDT",
             "ETH/USDT",
-           
-
+            "BTC/USDT",
+            "RAY/USDT",
+            "UNI/USDT",
+            "SUSHI/USDT",
+            "SRM/USDT",
+            "LINK/USDT",
+            "MANA/USDT",
+            "LTC/USDT",
+            "TRX/USDT",
             
 
         ],
