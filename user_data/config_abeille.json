@@ -130,7 +130,7 @@
         "verbosity": "error",
         "enable_openapi": false,
         "jwt_secret_key": "de6f7bab52bafcbebf5261c93a8415083afd184cb94d5ba3f8a2c024ba792a4d",
-        "CORS_origins": ["http://54.216.122.196:8080"],
+        "CORS_origins": ["http://54.216.77.1:8080"],
         "username": "mooneyes",
         "password": "mooneyes!12344"
 
