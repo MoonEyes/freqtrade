@@ -10,7 +10,7 @@
     "cancel_open_orders_on_exit" : true,
     "trading_mode": "futures",
     "margin_mode": "isolated",
-    "liquidation_buffer": 0.05,
+    //"liquidation_buffer": 0.05,
     "unfilledtimeout": {
         "entry": 10,
         "exit": 10,
@@ -20,7 +20,7 @@
     "entry_pricing": {
         "price_side": "same",
         "use_order_book": true,
-        "order_book_top": 1,
+        "order_book_top": 5,
         "price_last_balance": 0.0,
         "check_depth_of_market": {
             "enabled": false,
@@ -39,30 +39,30 @@
         "ccxt_config": {},
         "ccxt_async_config": {},
         "pair_whitelist": [
-            "DOGE/USDT",
-            "CHZ/USDT",
-            "AXS/USDT",
-            "BNB/USDT",
             "MATIC/USDT",
-            "SOL/USDT",
-            "YFI/USDT",
-            "WAVES/USDT",
-            "AAVE/USDT",
-            "SAND/USDT",
-            "FTM/USDT",
             "FTT/USDT",
-            "XRP/USDT",
+            "DOGE/USDT",
+            "BNB/USDT",
+            "AXS/USDT",
+            "SAND/USDT",
             "ETH/USDT",
-            "BTC/USDT",
-            "RAY/USDT",
-            "UNI/USDT",
-            "SUSHI/USDT",
-            "SRM/USDT",
-            "LINK/USDT",
+            "WAVES/USDT",
+            "XRP/USDT",
+            "CRV/USDT",
+            "YFI/USDT",
             "MANA/USDT",
-            "LTC/USDT",
+            "CHZ/USDT",
+            "SOL/USDT",
+            "AAVE/USDT",
+            "UNI/USDT",
+            "FTM/USDT",
+            "1INCH/USDT",
+            "RAY/USDT",
+            "LINK/USDT",
             "TRX/USDT",
-            
+            "BTC/USDT",
+            "SRM/USDT",
+
 
         ],
         "pair_blacklist": [
@@ -71,6 +71,7 @@
     },
     "pairlists": [
         {
+            
             "method": "StaticPairList",
             "number_assets": 20,
             "sort_key": "quoteVolume",
@@ -129,7 +130,7 @@
         "verbosity": "error",
         "enable_openapi": false,
         "jwt_secret_key": "de6f7bab52bafcbebf5261c93a8415083afd184cb94d5ba3f8a2c024ba792a4d",
-        "CORS_origins": ["http://54.216.122.196:8080"],
+        "CORS_origins": ["http://3.250.213.212:8080"],
         "username": "mooneyes",
         "password": "mooneyes!12344"
     },

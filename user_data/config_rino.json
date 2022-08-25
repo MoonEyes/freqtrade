@@ -12,15 +12,15 @@
     "margin_mode": "isolated",
     "liquidation_buffer": 0.05,
     "unfilledtimeout": {
-        "entry": 30,
-        "exit": 30,
+        "entry": 10,
+        "exit": 10,
         "exit_timeout_count": 0,
         "unit": "minutes"
     },
     "entry_pricing": {
         "price_side": "same",
         "use_order_book": true,
-        "order_book_top": 10,
+        "order_book_top": 5,
         "price_last_balance": 0.0,
         "check_depth_of_market": {
             "enabled": false,
@@ -62,6 +62,8 @@
             "MANA/USDT",
             "LTC/USDT",
             "TRX/USDT",
+
+
         ],
         "pair_blacklist": [
 
@@ -69,6 +71,7 @@
     },
     "pairlists": [
         {
+            
             "method": "StaticPairList",
             "number_assets": 20,
             "sort_key": "quoteVolume",
@@ -127,7 +130,7 @@
         "verbosity": "error",
         "enable_openapi": false,
         "jwt_secret_key": "de6f7bab52bafcbebf5261c93a8415083afd184cb94d5ba3f8a2c024ba792a4d",
-        "CORS_origins": ["http://54.216.122.196:8080"],
+        "CORS_origins": ["http://3.250.213.212:8080"],
         "username": "mooneyes",
         "password": "mooneyes!12344"
     },
