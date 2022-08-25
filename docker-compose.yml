@@ -18,7 +18,7 @@ services:
     # Please read the https://www.freqtrade.io/en/stable/rest-api/ documentation
     # before enabling this.
     ports:
-      - "54.216.77.1:8080:8080"
+      - "172.31.42.100:8080:8080"
     # Default command used when running `docker compose up`
     command: >
       trade
@@ -37,7 +37,7 @@ services:
     volumes:
       - "./user_data:/freqtrade/user_data"
     ports:
-      - "54.216.77.1:8081:8081"
+      - "172.31.42.100:8081:8081"
     command: >
       trade
       --logfile /freqtrade/user_data/logs/freqtrade_hibou.log
@@ -55,7 +55,7 @@ services:
     volumes:
       - "./user_data:/freqtrade/user_data"
     ports:
-      - "54.216.77.1:8082:8082"
+      - "172.31.42.100:8082:8082"
     command: >
       trade
       --logfile /freqtrade/user_data/logs/freqtrade_abeille.log
