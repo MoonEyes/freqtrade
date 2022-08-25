@@ -10,17 +10,17 @@
     "cancel_open_orders_on_exit" : true,
     "trading_mode": "futures",
     "margin_mode": "isolated",
-    //"liquidation_buffer": 0.05,
+    "liquidation_buffer": 0.05,
     "unfilledtimeout": {
-        "entry": 10,
-        "exit": 10,
+        "entry": 30,
+        "exit": 30,
         "exit_timeout_count": 0,
         "unit": "minutes"
     },
     "entry_pricing": {
         "price_side": "same",
         "use_order_book": true,
-        "order_book_top": 5,
+        "order_book_top": 10,
         "price_last_balance": 0.0,
         "check_depth_of_market": {
             "enabled": false,
@@ -39,31 +39,11 @@
         "ccxt_config": {},
         "ccxt_async_config": {},
         "pair_whitelist": [
-            "MATIC/USDT",
-            "FTT/USDT",
-            "DOGE/USDT",
+            "ETH/USDT",
+            "SOL/USDT",
             "BNB/USDT",
             "AXS/USDT",
-            "SAND/USDT",
-            "ETH/USDT",
-            "WAVES/USDT",
-            "XRP/USDT",
-            "CRV/USDT",
-            "YFI/USDT",
-            "MANA/USDT",
-            "CHZ/USDT",
-            "SOL/USDT",
-            "AAVE/USDT",
-            "UNI/USDT",
-            "FTM/USDT",
-            "1INCH/USDT",
-            "RAY/USDT",
-            "LINK/USDT",
-            "TRX/USDT",
-            "BTC/USDT",
-            "SRM/USDT",
-
-
+            "SAND/USDT"
         ],
         "pair_blacklist": [
 
@@ -71,7 +51,6 @@
     },
     "pairlists": [
         {
-            
             "method": "StaticPairList",
             "number_assets": 20,
             "sort_key": "quoteVolume",
