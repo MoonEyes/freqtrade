@@ -113,7 +113,7 @@
         "username": "mooneyes",
         "password": "mooneyes!12344"
     },
-    "bot_name": "freqtrade",
+    "bot_name": "freqtrade_ours",
     "initial_state": "running",
     "force_entry_enable": false,
     "internals": {
