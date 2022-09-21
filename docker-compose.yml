@@ -55,7 +55,7 @@ services:
     volumes:
       - "./user_data:/freqtrade/user_data"
     ports:
-      - "0.0.0.0:8083:8081"
+      - "0.0.0.0:8081:8081"
     command: >
       trade
       --logfile /freqtrade/user_data/logs/freqtrade_hibou.log
