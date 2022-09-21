@@ -27,7 +27,7 @@ class hibou(IStrategy):
     INTERFACE_VERSION = 3
 
     # Can this strategy go short?
-    can_short: bool = True
+    can_short: bool = False
 
 
     # Minimal ROI designed for the strategy.
