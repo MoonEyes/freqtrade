@@ -27,7 +27,7 @@ class ours(IStrategy):
     INTERFACE_VERSION = 3
 
     # Can this strategy go short?
-    can_short: bool = True
+    can_short: bool = False
 
 
     # Minimal ROI designed for the strategy.
@@ -47,7 +47,7 @@ class ours(IStrategy):
     #trailing_only_offset_is_reached = True  # value loaded from strategy
 
     # Optimal timeframe for the strategy.
-    timeframe = '1h'
+    timeframe = '15m'
 
     # Run "populate_indicators()" only for new candle.
     process_only_new_candles = False
