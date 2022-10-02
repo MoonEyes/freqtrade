@@ -92,7 +92,7 @@
     },
     "telegram": {
         "enabled": true,
-        "token": "5562808410:AAEyPPVkVN8lw42GehqjjeYI5uah6idO36c",
+        "token": "5446969294:AAFq0yJvQbhuMa06XQUqrcgFlrD5qhJ1QE4",
         "chat_id": "-743885082",
         "notification_settings": {
             "status": "silent",
