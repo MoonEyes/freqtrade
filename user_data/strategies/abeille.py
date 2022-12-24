@@ -116,7 +116,71 @@ class abeille(IStrategy):
         dataframe['supertrend_2_buy_ST'] = self.supertrend(dataframe, self.buy_m2.value, self.buy_p2.value)['ST']
         dataframe['supertrend_3_buy_ST'] = self.supertrend(dataframe, self.buy_m3.value, self.buy_p3.value)['ST']
        
+        dataframe = self.freqai.start(dataframe, metadata, self)
+        
         return dataframe
+    
+    def populate_any_indicators(
+        self, pair, df, tf, informative=None, set_generalized_indicators=False
+    ):
+        """
+        Function designed to automatically generate, name and merge features
+        from user indicated timeframes in the configuration file. User controls the indicators
+        passed to the training/prediction by prepending indicators with `'%-' + coin `
+        (see convention below). I.e. user should not prepend any supporting metrics
+        (e.g. bb_lowerband below) with % unless they explicitly want to pass that metric to the
+        model.
+        :param pair: pair to be used as informative
+        :param df: strategy dataframe which will receive merges from informatives
+        :param tf: timeframe of the dataframe which will modify the feature names
+        :param informative: the dataframe associated with the informative pair
+        :param coin: the name of the coin which will modify the feature names.
+        """
+
+        coin = pair.split('/')[0]
+
+        if informative is None:
+            informative = self.dp.get_pair_dataframe(pair, tf)
+
+        # first loop is automatically duplicating indicators for time periods
+        for t in self.freqai_info["feature_parameters"]["indicator_periods_candles"]:
+            t = int(t)
+            informative[f"%-{coin}rsi-period_{t}"] = ta.RSI(informative, timeperiod=t)
+            informative[f"%-{coin}mfi-period_{t}"] = ta.MFI(informative, timeperiod=t)
+            informative[f"%-{coin}adx-period_{t}"] = ta.ADX(informative, window=t)
+
+        indicators = [col for col in informative if col.startswith("%")]
+        # This loop duplicates and shifts all indicators to add a sense of recency to data
+        for n in range(self.freqai_info["feature_parameters"]["include_shifted_candles"] + 1):
+            if n == 0:
+                continue
+            informative_shift = informative[indicators].shift(n)
+            informative_shift = informative_shift.add_suffix("_shift-" + str(n))
+            informative = pd.concat((informative, informative_shift), axis=1)
+
+        df = merge_informative_pair(df, informative, self.config["timeframe"], tf, ffill=True)
+        skip_columns = [
+            (s + "_" + tf) for s in ["date", "open", "high", "low", "close", "volume"]
+        ]
+        df = df.drop(columns=skip_columns)
+
+        # Add generalized indicators here (because in live, it will call this
+        # function to populate indicators during training). Notice how we ensure not to
+        # add them multiple times
+        if set_generalized_indicators:
+
+            # user adds targets here by prepending them with &- (see convention below)
+            # If user wishes to use multiple targets, a multioutput prediction model
+            # needs to be used such as templates/CatboostPredictionMultiModel.py
+            df["&-s_close"] = (
+                df["close"]
+                .shift(-self.freqai_info["feature_parameters"]["label_period_candles"])
+                .rolling(self.freqai_info["feature_parameters"]["label_period_candles"])
+                .mean()
+                / df["close"]
+                - 1
+            )
+        return df
 
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 

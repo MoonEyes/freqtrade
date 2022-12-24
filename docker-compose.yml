@@ -5,7 +5,8 @@ services:
     #image: freqtradeorg/freqtrade:stable
     # image: freqtradeorg/freqtrade:develop
     # Use plotting image
-    image: freqtradeorg/freqtrade:develop_plot
+    #image: freqtradeorg/freqtrade:develop_freqai
+    image: freqtradeorg/freqtrade:develop_freqairl
     # Build step - only needed when additional dependencies are needed
     build:
       context: .
