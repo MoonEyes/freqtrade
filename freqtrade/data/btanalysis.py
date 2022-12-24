@@ -26,7 +26,7 @@ BT_DATA_COLUMNS = ['pair', 'stake_amount', 'amount', 'open_date', 'close_date',
                    'profit_ratio', 'profit_abs', 'exit_reason',
                    'initial_stop_loss_abs', 'initial_stop_loss_ratio', 'stop_loss_abs',
                    'stop_loss_ratio', 'min_rate', 'max_rate', 'is_open', 'enter_tag',
-                   'is_short'
+                   'leverage', 'is_short', 'open_timestamp', 'close_timestamp', 'orders'
                    ]
 
 
@@ -280,9 +280,13 @@ def load_backtest_data(filename: Union[Path, str], strategy: Optional[str] = Non
             # Compatibility support for pre short Columns
             if 'is_short' not in df.columns:
                 df['is_short'] = 0
+            if 'leverage' not in df.columns:
+                df['leverage'] = 1.0
             if 'enter_tag' not in df.columns:
                 df['enter_tag'] = df['buy_tag']
                 df = df.drop(['buy_tag'], axis=1)
+            if 'orders' not in df.columns:
+                df['orders'] = None
 
     else:
         # old format - only with lists.
@@ -337,11 +341,11 @@ def trade_list_to_dataframe(trades: List[LocalTrade]) -> pd.DataFrame:
     :param trades: List of trade objects
     :return: Dataframe with BT_DATA_COLUMNS
     """
-    df = pd.DataFrame.from_records([t.to_json() for t in trades], columns=BT_DATA_COLUMNS)
+    df = pd.DataFrame.from_records([t.to_json(True) for t in trades], columns=BT_DATA_COLUMNS)
     if len(df) > 0:
-        df.loc[:, 'close_date'] = pd.to_datetime(df['close_date'], utc=True)
-        df.loc[:, 'open_date'] = pd.to_datetime(df['open_date'], utc=True)
-        df.loc[:, 'close_rate'] = df['close_rate'].astype('float64')
+        df['close_date'] = pd.to_datetime(df['close_date'], utc=True)
+        df['open_date'] = pd.to_datetime(df['open_date'], utc=True)
+        df['close_rate'] = df['close_rate'].astype('float64')
     return df
 
 

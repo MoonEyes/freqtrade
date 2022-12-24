@@ -13,7 +13,7 @@
     Please only use advanced trading modes when you know how freqtrade (and your strategy) works.
     Also, never risk more than what you can afford to lose.
 
-Please read the [strategy migration guide](strategy_migration.md#strategy-migration-between-v2-and-v3) to migrate your strategy from a freqtrade v2 strategy, to v3 strategy that can short and trade futures.
+If you already have an existing strategy, please read the [strategy migration guide](strategy_migration.md#strategy-migration-between-v2-and-v3) to migrate your strategy from a freqtrade v2 strategy, to strategy of version 3 which can short and trade futures.
 
 ## Shorting
 
@@ -62,9 +62,19 @@ You will also have to pick a "margin mode" (explanation below) - with freqtrade 
 "margin_mode": "isolated"
 ```
 
+##### Pair namings
+
+Freqtrade follows the [ccxt naming conventions for futures](https://docs.ccxt.com/en/latest/manual.html?#perpetual-swap-perpetual-future).
+A futures pair will therefore have the naming of `base/quote:settle` (e.g. `ETH/USDT:USDT`).
+
+Binance is currently still an exception to this naming scheme, where pairs are named `ETH/USDT` also for futures markets, but will be aligned as soon as CCXT is ready.
+
 ### Margin mode
 
-The possible values are: `isolated`, or `cross`(*currently unavailable*)
+On top of `trading_mode` - you will also have to configure your `margin_mode`.
+While freqtrade currently only supports one margin mode, this will change, and by configuring it now you're all set for future updates.
+
+The possible values are: `isolated`, or `cross`(*currently unavailable*).
 
 #### Isolated margin mode
 
@@ -81,6 +91,16 @@ One account is used to share collateral between markets (trading pairs). Margin 
 ``` json
 "margin_mode": "cross"
 ```
+
+## Set leverage to use
+
+Different strategies and risk profiles will require different levels of leverage.
+While you could configure one static leverage value - freqtrade offers you the flexibility to adjust this via [strategy leverage callback](strategy-callbacks.md#leverage-callback) - which allows you to use different leverages by pair, or based on some other factor benefitting your strategy result.
+
+If not implemented, leverage defaults to 1x (no leverage).
+
+!!! Warning
+    Higher leverage also equals higher risk - be sure you fully understand the implications of using leverage!
 
 ## Understand `liquidation_buffer`
 

@@ -49,7 +49,7 @@ AVAILABLE_CLI_OPTIONS = {
         default=0,
     ),
     "logfile": Arg(
-        '--logfile',
+        '--logfile', '--log-file',
         help="Log to the file specified. Special values are: 'syslog', 'journald'. "
              "See the documentation for more details.",
         metavar='FILE',
@@ -69,7 +69,7 @@ AVAILABLE_CLI_OPTIONS = {
         metavar='PATH',
     ),
     "datadir": Arg(
-        '-d', '--datadir',
+        '-d', '--datadir', '--data-dir',
         help='Path to directory with historical backtesting data.',
         metavar='PATH',
     ),
@@ -255,6 +255,13 @@ AVAILABLE_CLI_OPTIONS = {
         nargs='+',
         default='default',
     ),
+    "analyze_per_epoch": Arg(
+        '--analyze-per-epoch',
+        help='Run populate_indicators once per epoch.',
+        action='store_true',
+        default=False,
+    ),
+
     "print_all": Arg(
         '--print-all',
         help='Print all results, not only the best ones.',
@@ -367,7 +374,7 @@ AVAILABLE_CLI_OPTIONS = {
         metavar='BASE_CURRENCY',
     ),
     "trading_mode": Arg(
-        '--trading-mode',
+        '--trading-mode', '--tradingmode',
         help='Select Trading mode',
         choices=constants.TRADING_MODES,
     ),
@@ -386,7 +393,8 @@ AVAILABLE_CLI_OPTIONS = {
     # Download data
     "pairs_file": Arg(
         '--pairs-file',
-        help='File containing a list of pairs to download.',
+        help='File containing a list of pairs. '
+             'Takes precedence over --pairs or pairs configured in the configuration.',
         metavar='FILE',
     ),
     "days": Arg(
@@ -432,7 +440,12 @@ AVAILABLE_CLI_OPTIONS = {
     "dataformat_trades": Arg(
         '--data-format-trades',
         help='Storage format for downloaded trades data. (default: `jsongz`).',
-        choices=constants.AVAILABLE_DATAHANDLERS,
+        choices=constants.AVAILABLE_DATAHANDLERS_TRADES,
+    ),
+    "show_timerange": Arg(
+        '--show-timerange',
+        help='Show timerange available for available data. (May take a while to calculate).',
+        action='store_true',
     ),
     "exchange": Arg(
         '--exchange',
@@ -443,14 +456,12 @@ AVAILABLE_CLI_OPTIONS = {
         '-t', '--timeframes',
         help='Specify which tickers to download. Space-separated list. '
         'Default: `1m 5m`.',
-        choices=['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h',
-                 '6h', '8h', '12h', '1d', '3d', '1w', '2w', '1M', '1y'],
         default=['1m', '5m'],
         nargs='+',
     ),
     "prepend_data": Arg(
         '--prepend',
-        help='Allow data prepending.',
+        help='Allow data prepending. (Data-appending is disabled)',
         action='store_true',
     ),
     "erase": Arg(
@@ -613,5 +624,53 @@ AVAILABLE_CLI_OPTIONS = {
         help=("Suppress errors for any requested Hyperopt spaces "
               "that do not contain any parameters."),
         action="store_true",
+    ),
+    "analysis_groups": Arg(
+        "--analysis-groups",
+        help=("grouping output - "
+              "0: simple wins/losses by enter tag, "
+              "1: by enter_tag, "
+              "2: by enter_tag and exit_tag, "
+              "3: by pair and enter_tag, "
+              "4: by pair, enter_ and exit_tag (this can get quite large)"),
+        nargs='+',
+        default=['0', '1', '2'],
+        choices=['0', '1', '2', '3', '4'],
+    ),
+    "enter_reason_list": Arg(
+        "--enter-reason-list",
+        help=("Comma separated list of entry signals to analyse. Default: all. "
+              "e.g. 'entry_tag_a,entry_tag_b'"),
+        nargs='+',
+        default=['all'],
+    ),
+    "exit_reason_list": Arg(
+        "--exit-reason-list",
+        help=("Comma separated list of exit signals to analyse. Default: all. "
+              "e.g. 'exit_tag_a,roi,stop_loss,trailing_stop_loss'"),
+        nargs='+',
+        default=['all'],
+    ),
+    "indicator_list": Arg(
+        "--indicator-list",
+        help=("Comma separated list of indicators to analyse. "
+              "e.g. 'close,rsi,bb_lowerband,profit_abs'"),
+        nargs='+',
+        default=[],
+    ),
+    "freqaimodel": Arg(
+        '--freqaimodel',
+        help='Specify a custom freqaimodels.',
+        metavar='NAME',
+    ),
+    "freqaimodel_path": Arg(
+        '--freqaimodel-path',
+        help='Specify additional lookup path for freqaimodels.',
+        metavar='PATH',
+    ),
+    "freqai_backtest_live_models": Arg(
+        '--freqai-backtest-live-models',
+        help='Run backtest with ready models.',
+        action='store_true'
     ),
 }

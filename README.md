@@ -28,7 +28,6 @@ Please read the [exchange specific notes](docs/exchanges.md) to learn about even
 
 - [X] [Binance](https://www.binance.com/)
 - [X] [Bittrex](https://bittrex.com/)
-- [X] [FTX](https://ftx.com/#a=2258149)
 - [X] [Gate.io](https://www.gate.io/ref/6266643)
 - [X] [Huobi](http://huobi.com/)
 - [X] [Kraken](https://kraken.com/)
@@ -39,7 +38,7 @@ Please read the [exchange specific notes](docs/exchanges.md) to learn about even
 
 - [X] [Binance](https://www.binance.com/)
 - [X] [Gate.io](https://www.gate.io/ref/6266643)
-- [X] [OKX](https://okx.com/).
+- [X] [OKX](https://okx.com/)
 
 Please make sure to read the [exchange specific notes](docs/exchanges.md), as well as the [trading with leverage](docs/leverage.md) documentation before diving in.
 
@@ -63,6 +62,7 @@ Please find the complete documentation on the [freqtrade website](https://www.fr
 - [x] **Dry-run**: Run the bot without paying money.
 - [x] **Backtesting**: Run a simulation of your buy/sell strategy.
 - [x] **Strategy Optimization by machine learning**: Use machine learning to optimize your buy/sell strategy parameters with real exchange data.
+- [X] **Adaptive prediction modeling**: Build a smart strategy with FreqAI that self-trains to the market via adaptive machine learning methods. [Learn more](https://www.freqtrade.io/en/stable/freqai/)
 - [x] **Edge position sizing** Calculate your win rate, risk reward ratio, the best stoploss and adjust your position size before taking a position for each specific market. [Learn more](https://www.freqtrade.io/en/stable/edge/).
 - [x] **Whitelist crypto-currencies**: Select which crypto-currency you want to trade or use dynamic whitelists.
 - [x] **Blacklist crypto-currencies**: Select which crypto-currency you want to avoid.
@@ -129,7 +129,7 @@ Telegram is not mandatory. However, this is a great way to control your bot. Mor
 
 - `/start`: Starts the trader.
 - `/stop`: Stops the trader.
-- `/stopbuy`: Stop entering new trades.
+- `/stopentry`: Stop entering new trades.
 - `/status <trade_id>|[table]`: Lists all or specific open trades.
 - `/profit [<n>]`: Lists cumulative profit from all finished trades, over the last n days.
 - `/forceexit <trade_id>|all`: Instantly exits the given trade (Ignoring `minimum_roi`).
@@ -193,7 +193,7 @@ Issues labeled [good first issue](https://github.com/freqtrade/freqtrade/labels/
 
 The clock must be accurate, synchronized to a NTP server very frequently to avoid problems with communication to the exchanges.
 
-### Min hardware required
+### Minimum hardware required
 
 To run this bot we recommend you a cloud instance with a minimum of:
 

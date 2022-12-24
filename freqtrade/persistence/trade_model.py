@@ -2,19 +2,23 @@
 This module contains the class to persist trades into SQLite
 """
 import logging
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
-from decimal import Decimal
+from math import isclose
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import (Boolean, Column, DateTime, Enum, Float, ForeignKey, Integer, String,
                         UniqueConstraint, desc, func)
-from sqlalchemy.orm import Query, relationship
+from sqlalchemy.orm import Query, lazyload, relationship
 
-from freqtrade.constants import DATETIME_PRINT_FORMAT, NON_OPEN_EXCHANGE_STATES, BuySell, LongShort
+from freqtrade.constants import (DATETIME_PRINT_FORMAT, MATH_CLOSE_PREC, NON_OPEN_EXCHANGE_STATES,
+                                 BuySell, LongShort)
 from freqtrade.enums import ExitType, TradingMode
 from freqtrade.exceptions import DependencyException, OperationalException
+from freqtrade.exchange import amount_to_contract_precision, price_to_precision
 from freqtrade.leverage import interest
 from freqtrade.persistence.base import _DECL_BASE
+from freqtrade.util import FtPrecise
 
 
 logger = logging.getLogger(__name__)
@@ -57,9 +61,12 @@ class Order(_DECL_BASE):
     filled = Column(Float, nullable=True)
     remaining = Column(Float, nullable=True)
     cost = Column(Float, nullable=True)
+    stop_price = Column(Float, nullable=True)
     order_date = Column(DateTime, nullable=True, default=datetime.utcnow)
     order_filled_date = Column(DateTime, nullable=True)
     order_update_date = Column(DateTime, nullable=True)
+
+    funding_fee = Column(Float, nullable=True)
 
     ft_fee_base = Column(Float, nullable=True)
 
@@ -69,12 +76,26 @@ class Order(_DECL_BASE):
         return self.order_date.replace(tzinfo=timezone.utc)
 
     @property
+    def order_filled_utc(self) -> Optional[datetime]:
+        """ last order-date with UTC timezoneinfo"""
+        return (
+            self.order_filled_date.replace(tzinfo=timezone.utc) if self.order_filled_date else None
+        )
+
+    @property
     def safe_price(self) -> float:
-        return self.average or self.price
+        return self.average or self.price or self.stop_price
 
     @property
     def safe_filled(self) -> float:
-        return self.filled or self.amount or 0.0
+        return self.filled if self.filled is not None else self.amount or 0.0
+
+    @property
+    def safe_remaining(self) -> float:
+        return (
+            self.remaining if self.remaining is not None else
+            self.amount - (self.filled or 0.0)
+        )
 
     @property
     def safe_fee_base(self) -> float:
@@ -107,6 +128,7 @@ class Order(_DECL_BASE):
         self.average = order.get('average', self.average)
         self.remaining = order.get('remaining', self.remaining)
         self.cost = order.get('cost', self.cost)
+        self.stop_price = order.get('stopPrice', self.stop_price)
 
         if 'timestamp' in order and order['timestamp'] is not None:
             self.order_date = datetime.fromtimestamp(order['timestamp'] / 1000, tz=timezone.utc)
@@ -114,6 +136,10 @@ class Order(_DECL_BASE):
         self.ft_is_open = True
         if self.status in NON_OPEN_EXCHANGE_STATES:
             self.ft_is_open = False
+            if self.trade:
+                # Assign funding fee up to this point
+                # (represents the funding fee since the last order)
+                self.funding_fee = self.trade.funding_fees
             if (order.get('filled', 0.0) or 0.0) > 0:
                 self.order_filled_date = datetime.now(timezone.utc)
         self.order_update_date = datetime.now(timezone.utc)
@@ -130,6 +156,7 @@ class Order(_DECL_BASE):
             'side': self.ft_order_side,
             'filled': self.filled,
             'remaining': self.remaining,
+            'stopPrice': self.stop_price,
             'datetime': self.order_date_utc.strftime('%Y-%m-%dT%H:%M:%S.%f'),
             'timestamp': int(self.order_date_utc.timestamp() * 1000),
             'status': self.status,
@@ -137,41 +164,49 @@ class Order(_DECL_BASE):
             'info': {},
         }
 
-    def to_json(self, entry_side: str) -> Dict[str, Any]:
-        return {
-            'pair': self.ft_pair,
-            'order_id': self.order_id,
-            'status': self.status,
+    def to_json(self, entry_side: str, minified: bool = False) -> Dict[str, Any]:
+        resp = {
             'amount': self.amount,
-            'average': round(self.average, 8) if self.average else 0,
             'safe_price': self.safe_price,
-            'cost': self.cost if self.cost else 0,
-            'filled': self.filled,
             'ft_order_side': self.ft_order_side,
-            'is_open': self.ft_is_open,
-            'order_date': self.order_date.strftime(DATETIME_PRINT_FORMAT)
-            if self.order_date else None,
-            'order_timestamp': int(self.order_date.replace(
-                tzinfo=timezone.utc).timestamp() * 1000) if self.order_date else None,
-            'order_filled_date': self.order_filled_date.strftime(DATETIME_PRINT_FORMAT)
-            if self.order_filled_date else None,
             'order_filled_timestamp': int(self.order_filled_date.replace(
                 tzinfo=timezone.utc).timestamp() * 1000) if self.order_filled_date else None,
-            'order_type': self.order_type,
-            'price': self.price,
             'ft_is_entry': self.ft_order_side == entry_side,
-            'remaining': self.remaining,
         }
+        if not minified:
+            resp.update({
+                'pair': self.ft_pair,
+                'order_id': self.order_id,
+                'status': self.status,
+                'average': round(self.average, 8) if self.average else 0,
+                'cost': self.cost if self.cost else 0,
+                'filled': self.filled,
+                'is_open': self.ft_is_open,
+                'order_date': self.order_date.strftime(DATETIME_PRINT_FORMAT)
+                if self.order_date else None,
+                'order_timestamp': int(self.order_date.replace(
+                    tzinfo=timezone.utc).timestamp() * 1000) if self.order_date else None,
+                'order_filled_date': self.order_filled_date.strftime(DATETIME_PRINT_FORMAT)
+                if self.order_filled_date else None,
+                'order_type': self.order_type,
+                'price': self.price,
+                'remaining': self.remaining,
+            })
+        return resp
 
     def close_bt_order(self, close_date: datetime, trade: 'LocalTrade'):
         self.order_filled_date = close_date
         self.filled = self.amount
+        self.remaining = 0
         self.status = 'closed'
         self.ft_is_open = False
-        if (self.ft_order_side == trade.entry_side
-                and len(trade.select_filled_orders(trade.entry_side)) == 1):
+        # Assign funding fees to Order.
+        # Assumes backtesting will use date_last_filled_utc to calculate future funding fees.
+        self.funding_fee = trade.funding_fees
+
+        if (self.ft_order_side == trade.entry_side):
             trade.open_rate = self.price
-            trade.recalc_open_trade_value()
+            trade.recalc_trade_from_orders()
             trade.adjust_stop_loss(trade.open_rate, trade.stop_loss_pct, refresh=True)
 
     @staticmethod
@@ -187,7 +222,7 @@ class Order(_DECL_BASE):
         if filtered_orders:
             oobj = filtered_orders[0]
             oobj.update_from_ccxt_object(order)
-            Order.query.session.commit()
+            Trade.commit()
         else:
             logger.warning(f"Did not find order for {order}.")
 
@@ -228,7 +263,11 @@ class LocalTrade():
     # Trades container for backtesting
     trades: List['LocalTrade'] = []
     trades_open: List['LocalTrade'] = []
+    # Copy of trades_open - but indexed by pair
+    bt_trades_open_pp: Dict[str, List['LocalTrade']] = defaultdict(list)
+    bt_open_open_trade_count: int = 0
     total_profit: float = 0
+    realized_profit: float = 0
 
     id: int = 0
 
@@ -282,6 +321,10 @@ class LocalTrade():
     timeframe: Optional[int] = None
 
     trading_mode: TradingMode = TradingMode.SPOT
+    amount_precision: Optional[float] = None
+    price_precision: Optional[float] = None
+    precision_mode: Optional[int] = None
+    contract_size: Optional[float] = None
 
     # Leverage trading properties
     liquidation_price: Optional[float] = None
@@ -293,6 +336,16 @@ class LocalTrade():
 
     # Futures properties
     funding_fees: Optional[float] = None
+
+    @property
+    def stoploss_or_liquidation(self) -> float:
+        if self.liquidation_price:
+            if self.is_short:
+                return min(self.stop_loss, self.liquidation_price)
+            else:
+                return max(self.stop_loss, self.liquidation_price)
+
+        return self.stop_loss
 
     @property
     def buy_tag(self) -> Optional[str]:
@@ -322,18 +375,27 @@ class LocalTrade():
             return self.amount
 
     @property
+    def date_last_filled_utc(self) -> datetime:
+        """ Date of the last filled order"""
+        orders = self.select_filled_orders()
+        if not orders:
+            return self.open_date_utc
+        return max([self.open_date_utc,
+                    max(o.order_filled_utc for o in orders if o.order_filled_utc)])
+
+    @property
     def open_date_utc(self):
         return self.open_date.replace(tzinfo=timezone.utc)
 
     @property
-    def close_date_utc(self):
-        return self.close_date.replace(tzinfo=timezone.utc)
+    def stoploss_last_update_utc(self):
+        if self.stoploss_last_update:
+            return self.stoploss_last_update.replace(tzinfo=timezone.utc)
+        return None
 
     @property
-    def enter_side(self) -> str:
-        """ DEPRECATED, please use entry_side instead"""
-        # TODO: Please remove me after 2022.5
-        return self.entry_side
+    def close_date_utc(self):
+        return self.close_date.replace(tzinfo=timezone.utc)
 
     @property
     def entry_side(self) -> str:
@@ -393,9 +455,9 @@ class LocalTrade():
             f'open_rate={self.open_rate:.8f}, open_since={open_since})'
         )
 
-    def to_json(self) -> Dict[str, Any]:
-        filled_orders = self.select_filled_orders()
-        orders = [order.to_json(self.entry_side) for order in filled_orders]
+    def to_json(self, minified: bool = False) -> Dict[str, Any]:
+        filled_orders = self.select_filled_or_open_orders()
+        orders = [order.to_json(self.entry_side, minified) for order in filled_orders]
 
         return {
             'trade_id': self.id,
@@ -429,6 +491,7 @@ class LocalTrade():
                            if self.close_date else None),
             'close_timestamp': int(self.close_date.replace(
                 tzinfo=timezone.utc).timestamp() * 1000) if self.close_date else None,
+            'realized_profit': self.realized_profit or 0.0,
             'close_rate': self.close_rate,
             'close_rate_requested': self.close_rate_requested,
             'close_profit': self.close_profit,  # Deprecated
@@ -480,6 +543,8 @@ class LocalTrade():
         """
         LocalTrade.trades = []
         LocalTrade.trades_open = []
+        LocalTrade.bt_trades_open_pp = defaultdict(list)
+        LocalTrade.bt_open_open_trade_count = 0
         LocalTrade.total_profit = 0
 
     def adjust_min_max_rates(self, current_price: float, current_price_low: float) -> None:
@@ -489,7 +554,7 @@ class LocalTrade():
         self.max_rate = max(current_price, self.max_rate or self.open_rate)
         self.min_rate = min(current_price_low, self.min_rate or self.open_rate)
 
-    def set_isolated_liq(self, liquidation_price: Optional[float]):
+    def set_liquidation_price(self, liquidation_price: Optional[float]):
         """
         Method you should use to set self.liquidation price.
         Assures stop_loss is not passed the liquidation price
@@ -498,25 +563,16 @@ class LocalTrade():
             return
         self.liquidation_price = liquidation_price
 
-    def _set_stop_loss(self, stop_loss: float, percent: float):
+    def __set_stop_loss(self, stop_loss: float, percent: float):
         """
-        Method you should use to set self.stop_loss.
-        Assures stop_loss is not passed the liquidation price
+        Method used internally to set self.stop_loss.
         """
-        if self.liquidation_price is not None:
-            if self.is_short:
-                sl = min(stop_loss, self.liquidation_price)
-            else:
-                sl = max(stop_loss, self.liquidation_price)
-        else:
-            sl = stop_loss
-
+        stop_loss_norm = price_to_precision(stop_loss, self.price_precision, self.precision_mode)
         if not self.stop_loss:
-            self.initial_stop_loss = sl
-        self.stop_loss = sl
+            self.initial_stop_loss = stop_loss_norm
+        self.stop_loss = stop_loss_norm
 
         self.stop_loss_pct = -1 * abs(percent)
-        self.stoploss_last_update = datetime.utcnow()
 
     def adjust_stop_loss(self, current_price: float, stoploss: float,
                          initial: bool = False, refresh: bool = False) -> None:
@@ -535,19 +591,14 @@ class LocalTrade():
         leverage = self.leverage or 1.0
         if self.is_short:
             new_loss = float(current_price * (1 + abs(stoploss / leverage)))
-            # If trading with leverage, don't set the stoploss below the liquidation price
-            if self.liquidation_price:
-                new_loss = min(self.liquidation_price, new_loss)
         else:
             new_loss = float(current_price * (1 - abs(stoploss / leverage)))
-            # If trading with leverage, don't set the stoploss below the liquidation price
-            if self.liquidation_price:
-                new_loss = max(self.liquidation_price, new_loss)
 
         # no stop loss assigned yet
         if self.initial_stop_loss_pct is None or refresh:
-            self._set_stop_loss(new_loss, stoploss)
-            self.initial_stop_loss = new_loss
+            self.__set_stop_loss(new_loss, stoploss)
+            self.initial_stop_loss = price_to_precision(
+                new_loss, self.price_precision, self.precision_mode)
             self.initial_stop_loss_pct = -1 * abs(stoploss)
 
         # evaluate if the stop loss needs to be updated
@@ -561,7 +612,7 @@ class LocalTrade():
             #   ? decreasing the minimum stoploss
             if (higher_stop and not self.is_short) or (lower_stop and self.is_short):
                 logger.debug(f"{self.pair} - Adjusting stoploss...")
-                self._set_stop_loss(new_loss, stoploss)
+                self.__set_stop_loss(new_loss, stoploss)
             else:
                 logger.debug(f"{self.pair} - Keeping current stoploss...")
 
@@ -593,15 +644,31 @@ class LocalTrade():
             if self.is_open:
                 payment = "SELL" if self.is_short else "BUY"
                 logger.info(f'{order.order_type.upper()}_{payment} has been fulfilled for {self}.')
-            self.open_order_id = None
+            # condition to avoid reset value when updating fees
+            if self.open_order_id == order.order_id:
+                self.open_order_id = None
+            else:
+                logger.warning(
+                    f'Got different open_order_id {self.open_order_id} != {order.order_id}')
             self.recalc_trade_from_orders()
         elif order.ft_order_side == self.exit_side:
             if self.is_open:
                 payment = "BUY" if self.is_short else "SELL"
                 # * On margin shorts, you buy a little bit more than the amount (amount + interest)
                 logger.info(f'{order.order_type.upper()}_{payment} has been fulfilled for {self}.')
-            self.close(order.safe_price)
-        elif order.ft_order_side == 'stoploss':
+            # condition to avoid reset value when updating fees
+            if self.open_order_id == order.order_id:
+                self.open_order_id = None
+            else:
+                logger.warning(
+                    f'Got different open_order_id {self.open_order_id} != {order.order_id}')
+            amount_tr = amount_to_contract_precision(self.amount, self.amount_precision,
+                                                     self.precision_mode, self.contract_size)
+            if isclose(order.safe_amount_after_fee, amount_tr, abs_tol=MATH_CLOSE_PREC):
+                self.close(order.safe_price)
+            else:
+                self.recalc_trade_from_orders()
+        elif order.ft_order_side == 'stoploss' and order.status not in ('canceled', 'open'):
             self.stoploss_order_id = None
             self.close_rate_requested = self.stop_loss
             self.exit_reason = ExitType.STOPLOSS_ON_EXCHANGE.value
@@ -619,11 +686,10 @@ class LocalTrade():
         """
         self.close_rate = rate
         self.close_date = self.close_date or datetime.utcnow()
-        self.close_profit = self.calc_profit_ratio()
-        self.close_profit_abs = self.calc_profit()
         self.is_open = False
         self.exit_order_status = 'closed'
         self.open_order_id = None
+        self.recalc_trade_from_orders(is_closing=True)
         if show_msg:
             logger.info(
                 'Marking %s as closed as the trade is fulfilled and found no open orders for it.',
@@ -669,13 +735,13 @@ class LocalTrade():
         """
         return len([o for o in self.orders if o.ft_order_side == self.exit_side])
 
-    def _calc_open_trade_value(self) -> float:
+    def _calc_open_trade_value(self, amount: float, open_rate: float) -> float:
         """
         Calculate the open_rate including open_fee.
         :return: Price in of the open trade incl. Fees
         """
-        open_trade = Decimal(self.amount) * Decimal(self.open_rate)
-        fees = open_trade * Decimal(self.fee_open)
+        open_trade = FtPrecise(amount) * FtPrecise(open_rate)
+        fees = open_trade * FtPrecise(self.fee_open)
         if self.is_short:
             return float(open_trade - fees)
         else:
@@ -686,177 +752,195 @@ class LocalTrade():
         Recalculate open_trade_value.
         Must be called whenever open_rate, fee_open is changed.
         """
-        self.open_trade_value = self._calc_open_trade_value()
+        self.open_trade_value = self._calc_open_trade_value(self.amount, self.open_rate)
 
-    def calculate_interest(self, interest_rate: Optional[float] = None) -> Decimal:
+    def calculate_interest(self) -> FtPrecise:
         """
-        :param interest_rate: interest_charge for borrowing this coin(optional).
-        If interest_rate is not set self.interest_rate will be used
+        Calculate interest for this trade. Only applicable for Margin trading.
         """
-        zero = Decimal(0.0)
+        zero = FtPrecise(0.0)
         # If nothing was borrowed
         if self.trading_mode != TradingMode.MARGIN or self.has_no_leverage:
             return zero
 
         open_date = self.open_date.replace(tzinfo=None)
         now = (self.close_date or datetime.now(timezone.utc)).replace(tzinfo=None)
-        sec_per_hour = Decimal(3600)
-        total_seconds = Decimal((now - open_date).total_seconds())
+        sec_per_hour = FtPrecise(3600)
+        total_seconds = FtPrecise((now - open_date).total_seconds())
         hours = total_seconds / sec_per_hour or zero
 
-        rate = Decimal(interest_rate or self.interest_rate)
-        borrowed = Decimal(self.borrowed)
+        rate = FtPrecise(self.interest_rate)
+        borrowed = FtPrecise(self.borrowed)
 
         return interest(exchange_name=self.exchange, borrowed=borrowed, rate=rate, hours=hours)
 
-    def _calc_base_close(self, amount: Decimal, rate: Optional[float] = None,
-                         fee: Optional[float] = None) -> Decimal:
+    def _calc_base_close(self, amount: FtPrecise, rate: float, fee: float) -> FtPrecise:
 
-        close_trade = Decimal(amount) * Decimal(rate or self.close_rate)  # type: ignore
-        fees = close_trade * Decimal(fee or self.fee_close)
+        close_trade = amount * FtPrecise(rate)
+        fees = close_trade * FtPrecise(fee)
 
         if self.is_short:
             return close_trade + fees
         else:
             return close_trade - fees
 
-    def calc_close_trade_value(self, rate: Optional[float] = None,
-                               fee: Optional[float] = None,
-                               interest_rate: Optional[float] = None) -> float:
+    def calc_close_trade_value(self, rate: float, amount: float = None) -> float:
         """
-        Calculate the close_rate including fee
-        :param fee: fee to use on the close rate (optional).
-            If rate is not set self.fee will be used
-        :param rate: rate to compare with (optional).
-            If rate is not set self.close_rate will be used
-        :param interest_rate: interest_charge for borrowing this coin (optional).
-            If interest_rate is not set self.interest_rate will be used
-        :return: Price in BTC of the open trade
+        Calculate the Trade's close value including fees
+        :param rate: rate to compare with.
+        :return: value in stake currency of the open trade
         """
         if rate is None and not self.close_rate:
             return 0.0
 
-        amount = Decimal(self.amount)
+        amount1 = FtPrecise(amount or self.amount)
         trading_mode = self.trading_mode or TradingMode.SPOT
 
         if trading_mode == TradingMode.SPOT:
-            return float(self._calc_base_close(amount, rate, fee))
+            return float(self._calc_base_close(amount1, rate, self.fee_close))
 
         elif (trading_mode == TradingMode.MARGIN):
 
-            total_interest = self.calculate_interest(interest_rate)
+            total_interest = self.calculate_interest()
 
             if self.is_short:
-                amount = amount + total_interest
-                return float(self._calc_base_close(amount, rate, fee))
+                amount1 = amount1 + total_interest
+                return float(self._calc_base_close(amount1, rate, self.fee_close))
             else:
                 # Currency already owned for longs, no need to purchase
-                return float(self._calc_base_close(amount, rate, fee) - total_interest)
+                return float(self._calc_base_close(amount1, rate, self.fee_close) - total_interest)
 
         elif (trading_mode == TradingMode.FUTURES):
             funding_fees = self.funding_fees or 0.0
             # Positive funding_fees -> Trade has gained from fees.
             # Negative funding_fees -> Trade had to pay the fees.
             if self.is_short:
-                return float(self._calc_base_close(amount, rate, fee)) - funding_fees
+                return float(self._calc_base_close(amount1, rate, self.fee_close)) - funding_fees
             else:
-                return float(self._calc_base_close(amount, rate, fee)) + funding_fees
+                return float(self._calc_base_close(amount1, rate, self.fee_close)) + funding_fees
         else:
             raise OperationalException(
                 f"{self.trading_mode.value} trading is not yet available using freqtrade")
 
-    def calc_profit(self, rate: Optional[float] = None,
-                    fee: Optional[float] = None,
-                    interest_rate: Optional[float] = None) -> float:
+    def calc_profit(self, rate: float, amount: float = None, open_rate: float = None) -> float:
         """
         Calculate the absolute profit in stake currency between Close and Open trade
-        :param fee: fee to use on the close rate (optional).
-            If fee is not set self.fee will be used
-        :param rate: close rate to compare with (optional).
-            If rate is not set self.close_rate will be used
-        :param interest_rate: interest_charge for borrowing this coin (optional).
-            If interest_rate is not set self.interest_rate will be used
-        :return:  profit in stake currency as float
+        :param rate: close rate to compare with.
+        :param amount: Amount to use for the calculation. Falls back to trade.amount if not set.
+        :param open_rate: open_rate to use. Defaults to self.open_rate if not provided.
+        :return: profit in stake currency as float
         """
-        close_trade_value = self.calc_close_trade_value(
-            rate=(rate or self.close_rate),
-            fee=(fee or self.fee_close),
-            interest_rate=(interest_rate or self.interest_rate)
-        )
+        close_trade_value = self.calc_close_trade_value(rate, amount)
+        if amount is None or open_rate is None:
+            open_trade_value = self.open_trade_value
+        else:
+            open_trade_value = self._calc_open_trade_value(amount, open_rate)
 
         if self.is_short:
-            profit = self.open_trade_value - close_trade_value
+            profit = open_trade_value - close_trade_value
         else:
-            profit = close_trade_value - self.open_trade_value
+            profit = close_trade_value - open_trade_value
         return float(f"{profit:.8f}")
 
-    def calc_profit_ratio(self, rate: Optional[float] = None,
-                          fee: Optional[float] = None,
-                          interest_rate: Optional[float] = None) -> float:
+    def calc_profit_ratio(
+            self, rate: float, amount: float = None, open_rate: float = None) -> float:
         """
         Calculates the profit as ratio (including fee).
-        :param rate: rate to compare with (optional).
-            If rate is not set self.close_rate will be used
-        :param fee: fee to use on the close rate (optional).
-        :param interest_rate: interest_charge for borrowing this coin (optional).
-            If interest_rate is not set self.interest_rate will be used
+        :param rate: rate to compare with.
+        :param amount: Amount to use for the calculation. Falls back to trade.amount if not set.
+        :param open_rate: open_rate to use. Defaults to self.open_rate if not provided.
         :return: profit ratio as float
         """
-        close_trade_value = self.calc_close_trade_value(
-            rate=(rate or self.close_rate),
-            fee=(fee or self.fee_close),
-            interest_rate=(interest_rate or self.interest_rate)
-        )
+        close_trade_value = self.calc_close_trade_value(rate, amount)
+
+        if amount is None or open_rate is None:
+            open_trade_value = self.open_trade_value
+        else:
+            open_trade_value = self._calc_open_trade_value(amount, open_rate)
 
         short_close_zero = (self.is_short and close_trade_value == 0.0)
-        long_close_zero = (not self.is_short and self.open_trade_value == 0.0)
+        long_close_zero = (not self.is_short and open_trade_value == 0.0)
         leverage = self.leverage or 1.0
 
         if (short_close_zero or long_close_zero):
             return 0.0
         else:
             if self.is_short:
-                profit_ratio = (1 - (close_trade_value / self.open_trade_value)) * leverage
+                profit_ratio = (1 - (close_trade_value / open_trade_value)) * leverage
             else:
-                profit_ratio = ((close_trade_value / self.open_trade_value) - 1) * leverage
+                profit_ratio = ((close_trade_value / open_trade_value) - 1) * leverage
 
         return float(f"{profit_ratio:.8f}")
 
-    def recalc_trade_from_orders(self):
-        # We need at least 2 entry orders for averaging amounts and rates.
-        # TODO: this condition could probably be removed
-        if len(self.select_filled_orders(self.entry_side)) < 2:
-            self.stake_amount = self.amount * self.open_rate / self.leverage
-
-            # Just in case, still recalc open trade value
-            self.recalc_open_trade_value()
-            return
-
-        total_amount = 0.0
-        total_stake = 0.0
-        for o in self.orders:
-            if (o.ft_is_open or
-                    (o.ft_order_side != self.entry_side) or
-                    (o.status not in NON_OPEN_EXCHANGE_STATES)):
+    def recalc_trade_from_orders(self, *, is_closing: bool = False):
+        ZERO = FtPrecise(0.0)
+        current_amount = FtPrecise(0.0)
+        current_stake = FtPrecise(0.0)
+        total_stake = 0.0  # Total stake after all buy orders (does not subtract!)
+        avg_price = FtPrecise(0.0)
+        close_profit = 0.0
+        close_profit_abs = 0.0
+        profit = None
+        # Reset funding fees
+        self.funding_fees = 0.0
+        funding_fees = 0.0
+        ordercount = len(self.orders) - 1
+        for i, o in enumerate(self.orders):
+            if o.ft_is_open or not o.filled:
                 continue
+            funding_fees += (o.funding_fee or 0.0)
+            tmp_amount = FtPrecise(o.safe_amount_after_fee)
+            tmp_price = FtPrecise(o.safe_price)
 
-            tmp_amount = o.safe_amount_after_fee
-            tmp_price = o.average or o.price
-            if o.filled is not None:
-                tmp_amount = o.filled
-            if tmp_amount > 0.0 and tmp_price is not None:
-                total_amount += tmp_amount
-                total_stake += tmp_price * tmp_amount
+            is_exit = o.ft_order_side != self.entry_side
+            side = FtPrecise(-1 if is_exit else 1)
+            if tmp_amount > ZERO and tmp_price is not None:
+                current_amount += tmp_amount * side
+                price = avg_price if is_exit else tmp_price
+                current_stake += price * tmp_amount * side
 
-        if total_amount > 0:
+                if current_amount > ZERO:
+                    avg_price = current_stake / current_amount
+
+            if is_exit:
+                # Process exits
+                if i == ordercount and is_closing:
+                    # Apply funding fees only to the last closing order
+                    self.funding_fees = funding_fees
+
+                exit_rate = o.safe_price
+                exit_amount = o.safe_amount_after_fee
+                profit = self.calc_profit(rate=exit_rate, amount=exit_amount,
+                                          open_rate=float(avg_price))
+                close_profit_abs += profit
+                close_profit = self.calc_profit_ratio(
+                    exit_rate, amount=exit_amount, open_rate=avg_price)
+            else:
+                total_stake = total_stake + self._calc_open_trade_value(tmp_amount, price)
+        self.funding_fees = funding_fees
+
+        if close_profit:
+            self.close_profit = close_profit
+            self.realized_profit = close_profit_abs
+            self.close_profit_abs = profit
+
+        current_amount_tr = amount_to_contract_precision(
+            float(current_amount), self.amount_precision, self.precision_mode, self.contract_size)
+        if current_amount_tr > 0.0:
+            # Trade is still open
             # Leverage not updated, as we don't allow changing leverage through DCA at the moment.
-            self.open_rate = total_stake / total_amount
-            self.stake_amount = total_stake / (self.leverage or 1.0)
-            self.amount = total_amount
-            self.fee_open_cost = self.fee_open * self.stake_amount
+            self.open_rate = float(current_stake / current_amount)
+            self.amount = current_amount_tr
+            self.stake_amount = float(current_stake) / (self.leverage or 1.0)
+            self.fee_open_cost = self.fee_open * float(current_stake)
             self.recalc_open_trade_value()
             if self.stop_loss_pct is not None and self.open_rate is not None:
                 self.adjust_stop_loss(self.open_rate, self.stop_loss_pct)
+        elif is_closing and total_stake > 0:
+            # Close profit abs / maximum owned
+            # Fees are considered as they are part of close_profit_abs
+            self.close_profit = (close_profit_abs / total_stake) * self.leverage
+            self.close_profit_abs = close_profit_abs
 
     def select_order_by_order_id(self, order_id: str) -> Optional[Order]:
         """
@@ -878,7 +962,7 @@ class LocalTrade():
         """
         orders = self.orders
         if order_side:
-            orders = [o for o in self.orders if o.ft_order_side == order_side]
+            orders = [o for o in orders if o.ft_order_side == order_side]
         if is_open is not None:
             orders = [o for o in orders if o.ft_is_open == is_open]
         if len(orders) > 0:
@@ -893,9 +977,24 @@ class LocalTrade():
         :return: array of Order objects
         """
         return [o for o in self.orders if ((o.ft_order_side == order_side) or (order_side is None))
-                and o.ft_is_open is False and
-                (o.filled or 0) > 0 and
-                o.status in NON_OPEN_EXCHANGE_STATES]
+                and o.ft_is_open is False
+                and o.filled
+                and o.status in NON_OPEN_EXCHANGE_STATES]
+
+    def select_filled_or_open_orders(self) -> List['Order']:
+        """
+        Finds filled or open orders
+        :param order_side: Side of the order (either 'buy', 'sell', or None)
+        :return: array of Order objects
+        """
+        return [o for o in self.orders if
+                (
+                    o.ft_is_open is False
+                    and (o.filled or 0) > 0
+                    and o.status in NON_OPEN_EXCHANGE_STATES
+                    )
+                or (o.ft_is_open is True and o.status is not None)
+                ]
 
     @property
     def nr_of_successful_entries(self) -> int:
@@ -975,6 +1074,8 @@ class LocalTrade():
     @staticmethod
     def close_bt_trade(trade):
         LocalTrade.trades_open.remove(trade)
+        LocalTrade.bt_trades_open_pp[trade.pair].remove(trade)
+        LocalTrade.bt_open_open_trade_count -= 1
         LocalTrade.trades.append(trade)
         LocalTrade.total_profit += trade.close_profit_abs
 
@@ -982,8 +1083,16 @@ class LocalTrade():
     def add_bt_trade(trade):
         if trade.is_open:
             LocalTrade.trades_open.append(trade)
+            LocalTrade.bt_trades_open_pp[trade.pair].append(trade)
+            LocalTrade.bt_open_open_trade_count += 1
         else:
             LocalTrade.trades.append(trade)
+
+    @staticmethod
+    def remove_bt_trade(trade):
+        LocalTrade.trades_open.remove(trade)
+        LocalTrade.bt_trades_open_pp[trade.pair].remove(trade)
+        LocalTrade.bt_open_open_trade_count -= 1
 
     @staticmethod
     def get_open_trades() -> List[Any]:
@@ -991,6 +1100,16 @@ class LocalTrade():
         Query trades from persistence layer
         """
         return Trade.get_trades_proxy(is_open=True)
+
+    @staticmethod
+    def get_open_trade_count() -> int:
+        """
+        get open trade count
+        """
+        if Trade.use_db:
+            return Trade.query.filter(Trade.is_open.is_(True)).count()
+        else:
+            return LocalTrade.bt_open_open_trade_count
 
     @staticmethod
     def stoploss_reinitialization(desired_stoploss):
@@ -1026,7 +1145,8 @@ class Trade(_DECL_BASE, LocalTrade):
 
     id = Column(Integer, primary_key=True)
 
-    orders = relationship("Order", order_by="Order.id", cascade="all, delete-orphan", lazy="joined")
+    orders = relationship("Order", order_by="Order.id", cascade="all, delete-orphan",
+                          lazy="selectin", innerjoin=True)
 
     exchange = Column(String(25), nullable=False)
     pair = Column(String(25), nullable=False, index=True)
@@ -1045,6 +1165,7 @@ class Trade(_DECL_BASE, LocalTrade):
     open_trade_value = Column(Float)
     close_rate: Optional[float] = Column(Float)
     close_rate_requested = Column(Float)
+    realized_profit = Column(Float, default=0.0)
     close_profit = Column(Float)
     close_profit_abs = Column(Float)
     stake_amount = Column(Float, nullable=False)
@@ -1076,6 +1197,10 @@ class Trade(_DECL_BASE, LocalTrade):
     timeframe = Column(Integer, nullable=True)
 
     trading_mode = Column(Enum(TradingMode), nullable=True)
+    amount_precision = Column(Float, nullable=True)
+    price_precision = Column(Float, nullable=True)
+    precision_mode = Column(Integer, nullable=True)
+    contract_size = Column(Float, nullable=True)
 
     # Leverage trading properties
     leverage = Column(Float, nullable=True, default=1.0)
@@ -1090,6 +1215,7 @@ class Trade(_DECL_BASE, LocalTrade):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.realized_profit = 0
         self.recalc_open_trade_value()
 
     def delete(self) -> None:
@@ -1103,6 +1229,10 @@ class Trade(_DECL_BASE, LocalTrade):
     @staticmethod
     def commit():
         Trade.query.session.commit()
+
+    @staticmethod
+    def rollback():
+        Trade.query.session.rollback()
 
     @staticmethod
     def get_trades_proxy(*, pair: str = None, is_open: bool = None,
@@ -1135,7 +1265,7 @@ class Trade(_DECL_BASE, LocalTrade):
             )
 
     @staticmethod
-    def get_trades(trade_filter=None) -> Query:
+    def get_trades(trade_filter=None, include_orders: bool = True) -> Query:
         """
         Helper function to query Trades using filters.
         NOTE: Not supported in Backtesting.
@@ -1150,9 +1280,14 @@ class Trade(_DECL_BASE, LocalTrade):
         if trade_filter is not None:
             if not isinstance(trade_filter, list):
                 trade_filter = [trade_filter]
-            return Trade.query.filter(*trade_filter)
+            this_query = Trade.query.filter(*trade_filter)
         else:
-            return Trade.query
+            this_query = Trade.query
+        if not include_orders:
+            # Don't load order relations
+            # Consider using noload or raiseload instead of lazyload
+            this_query = this_query.options(lazyload(Trade.orders))
+        return this_query
 
     @staticmethod
     def get_open_order_trades() -> List['Trade']:
@@ -1251,7 +1386,7 @@ class Trade(_DECL_BASE, LocalTrade):
         """
 
         filters = [Trade.is_open.is_(False)]
-        if(pair is not None):
+        if (pair is not None):
             filters.append(Trade.pair == pair)
 
         enter_tag_perf = Trade.query.with_entities(
@@ -1284,7 +1419,7 @@ class Trade(_DECL_BASE, LocalTrade):
         """
 
         filters = [Trade.is_open.is_(False)]
-        if(pair is not None):
+        if (pair is not None):
             filters.append(Trade.pair == pair)
 
         sell_tag_perf = Trade.query.with_entities(
@@ -1317,7 +1452,7 @@ class Trade(_DECL_BASE, LocalTrade):
         """
 
         filters = [Trade.is_open.is_(False)]
-        if(pair is not None):
+        if (pair is not None):
             filters.append(Trade.pair == pair)
 
         mix_tag_perf = Trade.query.with_entities(
@@ -1337,7 +1472,7 @@ class Trade(_DECL_BASE, LocalTrade):
             enter_tag = enter_tag if enter_tag is not None else "Other"
             exit_reason = exit_reason if exit_reason is not None else "Other"
 
-            if(exit_reason is not None and enter_tag is not None):
+            if (exit_reason is not None and enter_tag is not None):
                 mix_tag = enter_tag + " " + exit_reason
                 i = 0
                 if not any(item["mix_tag"] == mix_tag for item in return_list):
@@ -1372,3 +1507,102 @@ class Trade(_DECL_BASE, LocalTrade):
             .group_by(Trade.pair) \
             .order_by(desc('profit_sum')).first()
         return best_pair
+
+    @staticmethod
+    def get_trading_volume(start_date: datetime = datetime.fromtimestamp(0)) -> float:
+        """
+        Get Trade volume based on Orders
+        NOTE: Not supported in Backtesting.
+        :returns: Tuple containing (pair, profit_sum)
+        """
+        trading_volume = Order.query.with_entities(
+            func.sum(Order.cost).label('volume')
+        ).filter(
+            Order.order_filled_date >= start_date,
+            Order.status == 'closed'
+        ).scalar()
+        return trading_volume
+
+    @staticmethod
+    def from_json(json_str: str) -> 'Trade':
+        """
+        Create a Trade instance from a json string.
+
+        Used for debugging purposes - please keep.
+        :param json_str: json string to parse
+        :return: Trade instance
+        """
+        import rapidjson
+        data = rapidjson.loads(json_str)
+        trade = Trade(
+            id=data["trade_id"],
+            pair=data["pair"],
+            base_currency=data["base_currency"],
+            stake_currency=data["quote_currency"],
+            is_open=data["is_open"],
+            exchange=data["exchange"],
+            amount=data["amount"],
+            amount_requested=data["amount_requested"],
+            stake_amount=data["stake_amount"],
+            strategy=data["strategy"],
+            enter_tag=data["enter_tag"],
+            timeframe=data["timeframe"],
+            fee_open=data["fee_open"],
+            fee_open_cost=data["fee_open_cost"],
+            fee_open_currency=data["fee_open_currency"],
+            fee_close=data["fee_close"],
+            fee_close_cost=data["fee_close_cost"],
+            fee_close_currency=data["fee_close_currency"],
+            open_date=datetime.fromtimestamp(data["open_timestamp"] // 1000, tz=timezone.utc),
+            open_rate=data["open_rate"],
+            open_rate_requested=data["open_rate_requested"],
+            open_trade_value=data["open_trade_value"],
+            close_date=(datetime.fromtimestamp(data["close_timestamp"] // 1000, tz=timezone.utc)
+                        if data["close_timestamp"] else None),
+            realized_profit=data["realized_profit"],
+            close_rate=data["close_rate"],
+            close_rate_requested=data["close_rate_requested"],
+            close_profit=data["close_profit"],
+            close_profit_abs=data["close_profit_abs"],
+            exit_reason=data["exit_reason"],
+            exit_order_status=data["exit_order_status"],
+            stop_loss=data["stop_loss_abs"],
+            stop_loss_pct=data["stop_loss_ratio"],
+            stoploss_order_id=data["stoploss_order_id"],
+            stoploss_last_update=(datetime.fromtimestamp(data["stoploss_last_update"] // 1000,
+                                  tz=timezone.utc) if data["stoploss_last_update"] else None),
+            initial_stop_loss=data["initial_stop_loss_abs"],
+            initial_stop_loss_pct=data["initial_stop_loss_ratio"],
+            min_rate=data["min_rate"],
+            max_rate=data["max_rate"],
+            leverage=data["leverage"],
+            interest_rate=data["interest_rate"],
+            liquidation_price=data["liquidation_price"],
+            is_short=data["is_short"],
+            trading_mode=data["trading_mode"],
+            funding_fees=data["funding_fees"],
+            open_order_id=data["open_order_id"],
+        )
+        for order in data["orders"]:
+
+            order_obj = Order(
+                amount=order["amount"],
+                ft_order_side=order["ft_order_side"],
+                ft_pair=order["pair"],
+                ft_is_open=order["is_open"],
+                order_id=order["order_id"],
+                status=order["status"],
+                average=order["average"],
+                cost=order["cost"],
+                filled=order["filled"],
+                order_date=datetime.strptime(order["order_date"], DATETIME_PRINT_FORMAT),
+                order_filled_date=(datetime.fromtimestamp(
+                    order["order_filled_timestamp"] // 1000, tz=timezone.utc)
+                    if order["order_filled_timestamp"] else None),
+                order_type=order["order_type"],
+                price=order["price"],
+                remaining=order["remaining"],
+            )
+            trade.orders.append(order_obj)
+
+        return trade

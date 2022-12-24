@@ -77,7 +77,22 @@ function updateenv() {
         fi
     fi
 
-    ${PYTHON} -m pip install --upgrade -r ${REQUIREMENTS} ${REQUIREMENTS_HYPEROPT} ${REQUIREMENTS_PLOT}
+    REQUIREMENTS_FREQAI=""
+    REQUIREMENTS_FREQAI_RL=""
+    read -p "Do you want to install dependencies for freqai [y/N]? "
+    dev=$REPLY
+    if [[ $REPLY =~ ^[Yy]$ ]]
+    then
+        REQUIREMENTS_FREQAI="-r requirements-freqai.txt --use-pep517"
+        read -p "Do you also want dependencies for freqai-rl (~700mb additional space required) [y/N]? "
+        dev=$REPLY
+        if [[ $REPLY =~ ^[Yy]$ ]]
+        then
+            REQUIREMENTS_FREQAI="-r requirements-freqai-rl.txt"
+        fi
+    fi
+
+    ${PYTHON} -m pip install --upgrade -r ${REQUIREMENTS} ${REQUIREMENTS_HYPEROPT} ${REQUIREMENTS_PLOT} ${REQUIREMENTS_FREQAI} ${REQUIREMENTS_FREQAI_RL}
     if [ $? -ne 0 ]; then
         echo "Failed installing dependencies"
         exit 1
@@ -87,6 +102,10 @@ function updateenv() {
         echo "Failed installing Freqtrade"
         exit 1
     fi
+
+    echo "Installing freqUI"
+    freqtrade install-ui
+
     echo "pip install completed"
     echo
     if [[ $dev =~ ^[Yy]$ ]]; then

@@ -20,7 +20,9 @@ All profit calculations of Freqtrade include fees. For Backtesting / Hyperopt / 
 ## Bot execution logic
 
 Starting freqtrade in dry-run or live mode (using `freqtrade trade`) will start the bot and start the bot iteration loop.
-By default, loop runs every few seconds (`internals.process_throttle_secs`) and does roughly the following in the following sequence:
+This will also run the `bot_start()` callback.
+
+By default, the bot loop runs every few seconds (`internals.process_throttle_secs`) and performs the following actions:
 
 * Fetch open trades from persistence.
 * Calculate current list of tradable pairs.
@@ -54,6 +56,7 @@ This loop will be repeated again and again until the bot is stopped.
 [backtesting](backtesting.md) or [hyperopt](hyperopt.md) do only part of the above logic, since most of the trading operations are fully simulated.
 
 * Load historic data for configured pairlist.
+* Calls `bot_start()` once.
 * Calls `bot_loop_start()` once.
 * Calculate indicators (calls `populate_indicators()` once per pair).
 * Calculate entry / exit signals (calls `populate_entry_trend()` and `populate_exit_trend()` once per pair).
@@ -67,7 +70,7 @@ This loop will be repeated again and again until the bot is stopped.
   * Determine stake size by calling the `custom_stake_amount()` callback.
   * Check position adjustments for open trades if enabled and call `adjust_trade_position()` to determine if an additional order is requested.
   * Call `custom_stoploss()` and `custom_exit()` to find custom exit points.
-  * For exits based on exit-signal and custom-exit: Call `custom_exit_price()` to determine exit price (Prices are moved to be within the closing candle).
+  * For exits based on exit-signal, custom-exit and partial exits: Call `custom_exit_price()` to determine exit price (Prices are moved to be within the closing candle).
 * Generate backtest report output
 
 !!! Note

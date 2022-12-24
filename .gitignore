@@ -8,12 +8,20 @@ user_data/backtest_results/*
 !user_data/strategies/
 !user_data/plot/
 !user_data/notebooks
+!user_data/models
+!user_data/freqaimodels
+user_data/freqaimodels/*
+user_data/models/*
 user_data/notebooks/*
 freqtrade-plot.html
 freqtrade-profit-plot.html
 freqtrade/rpc/api_server/ui/*
+<<<<<<< HEAD
 user_data/hyperopt_results/*
 
+=======
+build_helpers/ta-lib/*
+>>>>>>> 4601705814f25bb32e9666c9a87d627f7aa215cd
 
 # Macos related
 .DS_Store
@@ -83,6 +91,8 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+# Mkdocs documentation
+site/
 
 # PyBuilder
 target/
@@ -105,7 +115,7 @@ target/
 !*.gitkeep
 !config_examples/config_binance.example.json
 !config_examples/config_bittrex.example.json
-!config_examples/config_ftx.example.json
 !config_examples/config_full.example.json
 !config_examples/config_kraken.example.json
 user_data/hyperopt_results/hyperopt_tickerdata.pkl
+!config_examples/config_freqai.example.json

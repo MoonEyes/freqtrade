@@ -3,7 +3,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
-from freqtrade.constants import LongShort
+from freqtrade.constants import Config, LongShort
 from freqtrade.enums import ExitType
 from freqtrade.persistence import Trade
 from freqtrade.plugins.protections import IProtection, ProtectionReturn
@@ -17,19 +17,20 @@ class StoplossGuard(IProtection):
     has_global_stop: bool = True
     has_local_stop: bool = True
 
-    def __init__(self, config: Dict[str, Any], protection_config: Dict[str, Any]) -> None:
+    def __init__(self, config: Config, protection_config: Dict[str, Any]) -> None:
         super().__init__(config, protection_config)
 
         self._trade_limit = protection_config.get('trade_limit', 10)
         self._disable_global_stop = protection_config.get('only_per_pair', False)
         self._only_per_side = protection_config.get('only_per_side', False)
+        self._profit_limit = protection_config.get('required_profit', 0.0)
 
     def short_desc(self) -> str:
         """
         Short method description - used for startup-messages
         """
         return (f"{self.name} - Frequent Stoploss Guard, {self._trade_limit} stoplosses "
-                f"within {self.lookback_period_str}.")
+                f"with profit < {self._profit_limit:.2%} within {self.lookback_period_str}.")
 
     def _reason(self) -> str:
         """
@@ -48,8 +49,8 @@ class StoplossGuard(IProtection):
         trades1 = Trade.get_trades_proxy(pair=pair, is_open=False, close_date=look_back_until)
         trades = [trade for trade in trades1 if (str(trade.exit_reason) in (
             ExitType.TRAILING_STOP_LOSS.value, ExitType.STOP_LOSS.value,
-            ExitType.STOPLOSS_ON_EXCHANGE.value)
-            and trade.close_profit and trade.close_profit < 0)]
+            ExitType.STOPLOSS_ON_EXCHANGE.value, ExitType.LIQUIDATION.value)
+            and trade.close_profit and trade.close_profit < self._profit_limit)]
 
         if self._only_per_side:
             # Long or short trades only

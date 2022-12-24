@@ -49,6 +49,13 @@ For more information about the [Remote container extension](https://code.visuals
 New code should be covered by basic unittests. Depending on the complexity of the feature, Reviewers may request more in-depth unittests.
 If necessary, the Freqtrade team can assist and give guidance with writing good tests (however please don't expect anyone to write the tests for you).
 
+#### How to run tests
+
+Use `pytest` in root folder to run all available testcases and confirm your local environment is setup correctly
+
+!!! Note "feature branches"
+    Tests are expected to pass on the `develop` and `stable` branches. Other branches may be work in progress with tests not working yet.
+
 #### Checking log content in tests
 
 Freqtrade uses 2 main methods to check log content in tests, `log_has()` and `log_has_re()` (to check using regex, in case of dynamic log-messages).
@@ -67,6 +74,36 @@ def test_method_to_test(caplog):
     assert log_has_re(r"This dynamic event happened and produced \d+", caplog)
 
 ```
+
+### Debug configuration
+
+To debug freqtrade, we recommend VSCode with the following launch configuration (located in `.vscode/launch.json`).
+Details will obviously vary between setups - but this should work to get you started.
+
+``` json
+{
+    "name": "freqtrade trade",
+    "type": "python",
+    "request": "launch",
+    "module": "freqtrade",
+    "console": "integratedTerminal",
+    "args": [
+        "trade",
+        // Optional:
+        // "--userdir", "user_data",
+        "--strategy", 
+        "MyAwesomeStrategy",
+    ]
+},
+```
+
+Command line arguments can be added in the `"args"` array.
+This method can also be used to debug a strategy, by setting the breakpoints within the strategy.
+
+A similar setup can also be taken for Pycharm - using `freqtrade` as module name, and setting the command line arguments as "parameters".
+
+!!! Note "Startup directory"
+    This assumes that you have the repository checked out, and the editor is started at the repository root level (so setup.py is at the top level of your repository).
 
 ## ErrorHandling
 
@@ -334,7 +371,7 @@ lev_tiers = exchange.fetch_leverage_tiers()
 
 # Assumes this is running in the root of the repository.
 file = Path('freqtrade/exchange/binance_leverage_tiers.json')
-json.dump(lev_tiers, file.open('w'), indent=2)
+json.dump(dict(sorted(lev_tiers.items())), file.open('w'), indent=2)
 
 ```
 
@@ -379,8 +416,9 @@ Determine if crucial bugfixes have been made between this commit and the current
 
 * Merge the release branch (stable) into this branch.
 * Edit `freqtrade/__init__.py` and add the version matching the current date (for example `2019.7` for July 2019). Minor versions can be `2019.7.1` should we need to do a second release that month. Version numbers must follow allowed versions from PEP0440 to avoid failures pushing to pypi.
-* Commit this part
-* push that branch to the remote and create a PR against the stable branch
+* Commit this part.
+* push that branch to the remote and create a PR against the stable branch.
+* Update develop version to next version following the pattern `2019.8-dev`.
 
 ### Create changelog from git commits
 
@@ -402,6 +440,11 @@ To keep the release-log short, best wrap the full git changelog into a collapsib
 
 </details>
 ```
+
+### FreqUI release
+
+If FreqUI has been updated substantially, make sure to create a release before merging the release branch.
+Make sure that freqUI CI on the release is finished and passed before merging the release.
 
 ### Create github release / tag
 

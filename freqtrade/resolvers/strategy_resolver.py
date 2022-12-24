@@ -9,10 +9,10 @@ from base64 import urlsafe_b64decode
 from inspect import getfullargspec
 from os import walk
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 from freqtrade.configuration.config_validation import validate_migrated_strategy_settings
-from freqtrade.constants import REQUIRED_ORDERTIF, REQUIRED_ORDERTYPES, USERPATH_STRATEGIES
+from freqtrade.constants import REQUIRED_ORDERTIF, REQUIRED_ORDERTYPES, USERPATH_STRATEGIES, Config
 from freqtrade.enums import TradingMode
 from freqtrade.exceptions import OperationalException
 from freqtrade.resolvers import IResolver
@@ -30,9 +30,10 @@ class StrategyResolver(IResolver):
     object_type_str = "Strategy"
     user_subdir = USERPATH_STRATEGIES
     initial_search_path = None
+    extra_path = "strategy_path"
 
     @staticmethod
-    def load_strategy(config: Dict[str, Any] = None) -> IStrategy:
+    def load_strategy(config: Config = None) -> IStrategy:
         """
         Load the custom class from config parameter
         :param config: configuration dictionary or None
@@ -47,26 +48,7 @@ class StrategyResolver(IResolver):
         strategy: IStrategy = StrategyResolver._load_strategy(
             strategy_name, config=config,
             extra_dir=config.get('strategy_path'))
-
-        if strategy._ft_params_from_file:
-            # Set parameters from Hyperopt results file
-            params = strategy._ft_params_from_file
-            strategy.minimal_roi = params.get('roi', getattr(strategy, 'minimal_roi', {}))
-
-            strategy.stoploss = params.get('stoploss', {}).get(
-                'stoploss', getattr(strategy, 'stoploss', -0.1))
-            trailing = params.get('trailing', {})
-            strategy.trailing_stop = trailing.get(
-                'trailing_stop', getattr(strategy, 'trailing_stop', False))
-            strategy.trailing_stop_positive = trailing.get(
-                'trailing_stop_positive', getattr(strategy, 'trailing_stop_positive', None))
-            strategy.trailing_stop_positive_offset = trailing.get(
-                'trailing_stop_positive_offset',
-                getattr(strategy, 'trailing_stop_positive_offset', 0))
-            strategy.trailing_only_offset_is_reached = trailing.get(
-                'trailing_only_offset_is_reached',
-                getattr(strategy, 'trailing_only_offset_is_reached', 0.0))
-
+        strategy.ft_load_params_from_file()
         # Set attributes
         # Check if we need to override configuration
         #             (Attribute name,                    default,     subkey)
@@ -110,8 +92,7 @@ class StrategyResolver(IResolver):
         return strategy
 
     @staticmethod
-    def _override_attribute_helper(strategy, config: Dict[str, Any],
-                                   attribute: str, default: Any):
+    def _override_attribute_helper(strategy, config: Config, attribute: str, default: Any):
         """
         Override attributes in the strategy.
         Prevalence:
@@ -234,7 +215,7 @@ class StrategyResolver(IResolver):
 
     @staticmethod
     def _load_strategy(strategy_name: str,
-                       config: dict, extra_dir: Optional[str] = None) -> IStrategy:
+                       config: Config, extra_dir: Optional[str] = None) -> IStrategy:
         """
         Search and loads the specified strategy.
         :param strategy_name: name of the module to import

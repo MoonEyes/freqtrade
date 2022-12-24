@@ -1,14 +1,17 @@
 import asyncio
 import logging
 from copy import deepcopy
+from datetime import datetime
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, BackgroundTasks, Depends
+from fastapi.exceptions import HTTPException
 
 from freqtrade.configuration.config_validation import validate_config_consistency
 from freqtrade.data.btanalysis import get_backtest_resultlist, load_and_merge_backtest_result
 from freqtrade.enums import BacktestState
 from freqtrade.exceptions import DependencyException
+from freqtrade.misc import deep_merge_dicts
 from freqtrade.rpc.api_server.api_schemas import (BacktestHistoryEntry, BacktestRequest,
                                                   BacktestResponse)
 from freqtrade.rpc.api_server.deps import get_config, is_webserver_mode
@@ -30,12 +33,16 @@ async def api_start_backtest(bt_settings: BacktestRequest, background_tasks: Bac
     if ApiServer._bgtask_running:
         raise RPCException('Bot Background task already running')
 
+    if ':' in bt_settings.strategy:
+        raise HTTPException(status_code=500, detail="base64 encoded strategies are not allowed.")
+
     btconfig = deepcopy(config)
     settings = dict(bt_settings)
+    if settings.get('freqai', None) is not None:
+        settings['freqai'] = dict(settings['freqai'])
     # Pydantic models will contain all keys, but non-provided ones are None
-    for setting in settings.keys():
-        if settings[setting] is not None:
-            btconfig[setting] = settings[setting]
+
+    btconfig = deep_merge_dicts(settings, btconfig, allow_null_overrides=False)
     try:
         btconfig['stake_amount'] = float(btconfig['stake_amount'])
     except ValueError:
@@ -84,6 +91,7 @@ async def api_start_backtest(bt_settings: BacktestRequest, background_tasks: Bac
             lastconfig['enable_protections'] = btconfig.get('enable_protections')
             lastconfig['dry_run_wallet'] = btconfig.get('dry_run_wallet')
 
+            ApiServer._bt.enable_protections = btconfig.get('enable_protections', False)
             ApiServer._bt.strategylist = [strat]
             ApiServer._bt.results = {}
             ApiServer._bt.load_prior_backtest()
@@ -102,7 +110,10 @@ async def api_start_backtest(bt_settings: BacktestRequest, background_tasks: Bac
                     min_date=min_date, max_date=max_date)
 
             if btconfig.get('export', 'none') == 'trades':
-                store_backtest_stats(btconfig['exportfilename'], ApiServer._bt.results)
+                store_backtest_stats(
+                    btconfig['exportfilename'], ApiServer._bt.results,
+                    datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                    )
 
             logger.info("Backtest finished.")
 
