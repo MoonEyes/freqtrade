@@ -6,7 +6,7 @@ services:
     # image: freqtradeorg/freqtrade:develop
     # Use plotting image
     #image: freqtradeorg/freqtrade:develop_freqai
-    image: freqtradeorg/freqtrade:develop_freqairl
+    image: freqtradeorg/freqtrade:stable
     # Build step - only needed when additional dependencies are needed
     build:
       context: .
@@ -29,7 +29,7 @@ services:
       --strategy ours
 
   freqtrade_abeille:
-    image: freqtradeorg/freqtrade:develop_plot
+    image: freqtradeorg/freqtrade:stable
     build:
       context: .
       dockerfile: "./docker/Dockerfile.custom"
@@ -47,7 +47,7 @@ services:
       --strategy abeille
 
   freqtrade_hibou:
-    image: freqtradeorg/freqtrade:develop_plot
+    image: freqtradeorg/freqtrade:stable
     build:
       context: .
       dockerfile: "./docker/Dockerfile.custom"

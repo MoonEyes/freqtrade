@@ -1,4 +1,3 @@
-
 {
     "max_open_trades" : 1,
     "stake_currency": "USDT",
@@ -17,6 +16,7 @@
         "exit_timeout_count": 0,
         "unit": "minutes"
     },
+
     "entry_pricing": {
         "price_side": "same",
         "use_order_book": true,
