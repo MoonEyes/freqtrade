@@ -1,6 +1,24 @@
 ---
 version: '3'
 services:
+  freqtrade_abeille:
+    image: freqtradeorg/freqtrade:stable
+    build:
+      context: .
+      dockerfile: "./docker/Dockerfile.custom"
+    restart: unless-stopped
+    container_name: freqtrade_abeille
+    volumes:
+      - "./user_data:/freqtrade/user_data"
+    ports:
+      - "0.0.0.0:8090:8090"
+    command: >
+      trade
+      --logfile /freqtrade/user_data/logs/freqtrade_abeille.log
+      --db-url sqlite:////freqtrade/user_data/tradesv3.abeille.sqlite
+      --config /freqtrade/user_data/config_abeille.json
+      --strategy abeille
+
   freqtrade_ours:
     #image: freqtradeorg/freqtrade:stable
     # image: freqtradeorg/freqtrade:develop
@@ -28,23 +46,6 @@ services:
       --config /freqtrade/user_data/config_ours.json
       --strategy ours
 
-  freqtrade_abeille:
-    image: freqtradeorg/freqtrade:stable
-    build:
-      context: .
-      dockerfile: "./docker/Dockerfile.custom"
-    restart: unless-stopped
-    container_name: freqtrade_abeille
-    volumes:
-      - "./user_data:/freqtrade/user_data"
-    ports:
-      - "0.0.0.0:8082:8082"
-    command: >
-      trade
-      --logfile /freqtrade/user_data/logs/freqtrade_abeille.log
-      --db-url sqlite:////freqtrade/user_data/tradesv3.abeille.sqlite
-      --config /freqtrade/user_data/config_abeille.json
-      --strategy abeille
 
   freqtrade_hibou:
     image: freqtradeorg/freqtrade:stable
