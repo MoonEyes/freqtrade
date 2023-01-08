@@ -1,14 +1,15 @@
 
 {
-    "max_open_trades" : 15,
+    "max_open_trades": 3,
     "stake_currency": "USDT",
     "stake_amount": "unlimited",
-    "tradable_balance_ratio": 0.50,
+    "tradable_balance_ratio": 0.99,
     "fiat_display_currency": "USD",
     "dry_run": true,
-    "dry_run_wallet": 350,
-    "cancel_open_orders_on_exit" : false,
+    "dry_run_wallet": 1000,
+    "cancel_open_orders_on_exit": false,
     "trading_mode": "spot",
+    "margin_mode": "",
     "unfilledtimeout": {
         "entry": 10,
         "exit": 10,
@@ -37,12 +38,10 @@
         "ccxt_config": {},
         "ccxt_async_config": {},
         "pair_whitelist": [
-            "ETH/USDT",
-            "BTC/USDT"
-
+            "ETH/USDT"
         ],
         "pair_blacklist": [
-
+            "BNB/.*"
         ]
     },
     "pairlists": [
@@ -74,15 +73,16 @@
         "chat_id": ""
     },
     "api_server": {
-        "enabled": true,
-        "listen_ip_address": "0.0.0.0",
+        "enabled": false,
+        "listen_ip_address": "127.0.0.1",
         "listen_port": 8080,
         "verbosity": "error",
         "enable_openapi": false,
-        "jwt_secret_key": "de6f7bab52bafcbebf5261c93a8415083afd184cb94d5ba3f8a2c024ba792a4d",
+        "jwt_secret_key": "3cfc2db23ea8c00c4e334a4410acb91da0d761a3e59655bdc71b5705bbfdc577",
+        "ws_token": "K_LBnSJdRsMrBXhzWOJ-8oFZFTVNDx_beg",
         "CORS_origins": [],
-        "username": "freqtrader",
-        "password": "freqtrader"
+        "username": "",
+        "password": ""
     },
     "bot_name": "freqtrade",
     "initial_state": "running",

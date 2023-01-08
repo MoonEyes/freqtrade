@@ -4,6 +4,7 @@ from typing import Dict
 
 from pandas import DataFrame
 
+from freqtrade.constants import Config
 from freqtrade.optimize.hyperopt import IHyperOptLoss
 
 
@@ -11,7 +12,7 @@ from freqtrade.optimize.hyperopt import IHyperOptLoss
 
 # set TARGET_TRADES to suit your number concurrent trades so its realistic
 # to the number of days
-TARGET_TRADES = 5000
+TARGET_TRADES = 600
 # This is assumed to be expected avg profit * expected trade count.
 # For example, for 0.35% avg per trade (or 0.0035 as ratio) and 1100 trades,
 # self.expected_max_profit = 3.85
@@ -21,7 +22,7 @@ EXPECTED_MAX_PROFIT = 3.0
 
 # max average trade duration in minutes
 # if eval ends with higher value, we consider it a failed eval
-MAX_ACCEPTED_TRADE_DURATION = 2000
+MAX_ACCEPTED_TRADE_DURATION = 300
 
 
 class SampleHyperOptLoss(IHyperOptLoss):
@@ -36,7 +37,7 @@ class SampleHyperOptLoss(IHyperOptLoss):
     @staticmethod
     def hyperopt_loss_function(results: DataFrame, trade_count: int,
                                min_date: datetime, max_date: datetime,
-                               config: Dict, processed: Dict[str, DataFrame],
+                               config: Config, processed: Dict[str, DataFrame],
                                *args, **kwargs) -> float:
         """
         Objective function, returns smaller number for better results
