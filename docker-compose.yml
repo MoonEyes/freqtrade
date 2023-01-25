@@ -60,3 +60,21 @@ services:
       --db-url sqlite:////freqtrade/user_data/tradesv3.hibou.sqlite
       --config /freqtrade/user_data/config_hibou.json
       --strategy hibou
+
+  freqtrade_koala:
+    image: freqtradeorg/freqtrade:stable
+    build:
+      context: .
+      dockerfile: "./docker/Dockerfile.custom"
+    restart: unless-stopped
+    container_name: freqtrade_koala
+    volumes:
+      - "./user_data:/freqtrade/user_data"
+    ports:
+      - "0.0.0.0:8094:8094"
+    command: >
+      trade
+      --logfile /freqtrade/user_data/logs/freqtrade_koala.log
+      --db-url sqlite:////freqtrade/user_data/tradesv3.koala.sqlite
+      --config /freqtrade/user_data/config_koala.json
+      --strategy koala
