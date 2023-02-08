@@ -47,7 +47,7 @@ class ours(IStrategy):
     #trailing_only_offset_is_reached = True  # value loaded from strategy
 
     # Optimal timeframe for the strategy.
-    timeframe = '15m'
+    timeframe = '1m'
 
     # Run "populate_indicators()" only for new candle.
     process_only_new_candles = False
@@ -107,7 +107,7 @@ class ours(IStrategy):
         # EMA - Exponential Moving Average
         dataframe['emaverylow'] = ta.EMA(dataframe['close'], timeperiod=9)
         dataframe['emalow'] = ta.EMA(dataframe['close'], timeperiod=21)
-        dataframe['emahigh'] = ta.EMA(dataframe['close'], timeperiod=55)
+        dataframe['emahigh'] = ta.EMA(dataframe['close'], timeperiod=89)
         dataframe['emalong'] = ta.EMA(dataframe['close'], timeperiod=200)
 
         
