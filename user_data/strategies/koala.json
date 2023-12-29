@@ -1,0 +1,37 @@
+{
+  "strategy_name": "koala",
+  "params": {
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": {
+      "max_open_trades": 1
+    },
+    "buy": {
+      "emahigh": 22,
+      "emalong": 301,
+      "emalow": 43,
+      "supertrend_m": 20,
+      "supertrend_p": 94
+    },
+    "sell": {
+      "supertrend_m_sell": 7,
+      "supertrend_p_sell": 17
+    },
+    "protection": {},
+    "roi": {
+      "0": 0.248,
+      "14": 0.055,
+      "36": 0.031,
+      "125": 0
+    },
+    "stoploss": {
+      "stoploss": -0.172
+    }
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2023-12-27 23:37:54.310264+00:00"
+}

@@ -50,7 +50,7 @@ class hibou(IStrategy):
     #trailing_only_offset_is_reached = True  # value loaded from strategy
 
     # Optimal timeframe for the strategy.
-    timeframe = '1h'
+    timeframe = '1d'
 
     # Run "populate_indicators()" only for new candle.
     process_only_new_candles = False

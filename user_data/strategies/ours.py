@@ -10,6 +10,7 @@ import numpy as np  # noqa
 import pandas as pd  # noqa
 from pandas import DataFrame
 
+
 from freqtrade.strategy import (BooleanParameter, CategoricalParameter, DecimalParameter,
                                 IStrategy, IntParameter)
 
@@ -21,7 +22,7 @@ import freqtrade.vendor.qtpylib.indicators as qtpylib
 
 # This class is a sample. Feel free to customize it.
 class ours(IStrategy):
-    
+
     # Strategy interface version - allow new iterations of the strategy interface.
     # Check the documentation or the Sample strategy to get the latest version.
     INTERFACE_VERSION = 3
@@ -34,6 +35,7 @@ class ours(IStrategy):
     # This attribute will be overridden if the config file contains "minimal_roi".
     minimal_roi = {
         "0": 1
+        
     }
 
     # Optimal stoploss designed for the strategy.
@@ -47,7 +49,7 @@ class ours(IStrategy):
     #trailing_only_offset_is_reached = True  # value loaded from strategy
 
     # Optimal timeframe for the strategy.
-    timeframe = '1m'
+    timeframe = '1h'
 
     # Run "populate_indicators()" only for new candle.
     process_only_new_candles = False
@@ -64,7 +66,7 @@ class ours(IStrategy):
     emaverylow = IntParameter(low=9, high=90, default=15, space='sell', optimize=True, load=True)
 
     # Number of candles the strategy requires before producing valid signals
-    startup_candle_count: int = 55
+    startup_candle_count: int = 12
 
     # Optional order type mapping.
     order_types = {

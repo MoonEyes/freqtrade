@@ -1,4 +1,3 @@
-
 {
     "max_open_trades" : 1,
     "stake_currency": "USDT",
@@ -8,7 +7,7 @@
     "dry_run": true,
     "dry_run_wallet": 350,
     "cancel_open_orders_on_exit" : true,
-    "trading_mode": "futures",
+    "trading_mode": "spot",
     "margin_mode": "isolated",
     "liquidation_buffer": 0.05,
     "unfilledtimeout": {
@@ -17,6 +16,7 @@
         "exit_timeout_count": 0,
         "unit": "minutes"
     },
+
     "entry_pricing": {
         "price_side": "same",
         "use_order_book": true,
@@ -38,15 +38,10 @@
         "secret": "",
         "ccxt_config": {},
         "ccxt_async_config": {},
-        "pair_whitelist": [
-            "ETH/USDT",
-            "SOL/USDT",
-            "BNB/USDT",
-            "AXS/USDT",
-            "SAND/USDT"
-        ],
+        "pair_whitelist": 
+        ["BTC/USDT","ETH/USDT","BNB/USDT","SOL/USDT","XRP/USDT","ADA/USDT","AVAX/USDT","DOGE/USDT","DOT/USDT","TRX/USDT","MATIC/USDT","LINK/USDT","WBTC/USDT","SHIB/USDT","UNI/USDT","LTC/USDT","BCH/USDT","ICP/USDT","ATOM/USDT","XLM/USDT","NEAR/USDT","OP/USDT","ETC/USDT","HBAR/USDT","IMX/USDT","INJ/USDT","XMR/USDT","APT/USDT","FIL/USDT","VET/USDT","LDO/USDT","STX/USDT","QNT/USDT","EGLD/USDT","ARB/USDT","ALGO/USDT","TIA/USDT","GRT/USDT","RNDR/USDT","AAVE/USDT","RUNE/USDT","ORDI/USDT","MKR/USDT","MINA/USDT","FLOW/USDT","FTM/USDT","SEI/USDT","SNX/USDT","THETA/USDT","AXS/USDT"],
         "pair_blacklist": [
-
+            "BNB/.*"
         ]
     },
     "pairlists": [
@@ -74,7 +69,7 @@
     },
     "telegram": {
         "enabled": true,
-        "token": "5562808410:AAEyPPVkVN8lw42GehqjjeYI5uah6idO36c",
+        "token": "5635525638:AAEaz5AF-C8U5d1bS911jy0zIw1CVy520VU",
         "chat_id": "-743885082",
         "notification_settings": {
             "status": "silent",
@@ -105,7 +100,7 @@
     "api_server": {
         "enabled": true,
         "listen_ip_address": "0.0.0.0",
-        "listen_port": 8091,
+        "listen_port": 8090,
         "verbosity": "error",
         "enable_openapi": false,
         "jwt_secret_key": "de6f7bab52bafcbebf5261c93a8415083afd184cb94d5ba3f8a2c024ba792a4d",
@@ -113,7 +108,7 @@
         "username": "mooneyes",
         "password": "mooneyes!12344"
     },
-    "bot_name": "freqtrade_ours",
+    "bot_name": "freqtrade_abeille",
     "initial_state": "running",
     "force_entry_enable": false,
     "internals": {

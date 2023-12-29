@@ -7,7 +7,7 @@
     "dry_run": true,
     "dry_run_wallet": 350,
     "cancel_open_orders_on_exit" : true,
-    "trading_mode": "futures",
+    "trading_mode": "spot",
     "margin_mode": "isolated",
     "liquidation_buffer": 0.05,
     "unfilledtimeout": {
@@ -39,14 +39,20 @@
         "ccxt_config": {},
         "ccxt_async_config": {},
         "pair_whitelist": [
+            "BTC/USDT",
             "ETH/USDT",
             "SOL/USDT",
+            "YFI/USDT",
             "BNB/USDT",
-            "AXS/USDT",
-            "SAND/USDT"
-        ],
+            "TRB/USDT",
+            "AVAX/USDT",
+            "MKR/USDT",
+            "ORDI/USDT",
+            "BCH/USDT",
+            "INJ/USDT",
+            "LTC/USDT"],
         "pair_blacklist": [
-
+            "BNB/.*"
         ]
     },
     "pairlists": [

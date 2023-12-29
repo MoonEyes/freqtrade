@@ -2,11 +2,7 @@
 {
     "max_open_trades": 3,
     "stake_currency": "USDT",
-<<<<<<< HEAD:user_data/config.json
-    "stake_amount": "unlimited",
-=======
     "stake_amount": 0.05,
->>>>>>> upstream/develop:config_examples/config_binance.example.json
     "tradable_balance_ratio": 0.99,
     "fiat_display_currency": "USD",
     "dry_run": true,
@@ -42,25 +38,7 @@
         "ccxt_config": {},
         "ccxt_async_config": {},
         "pair_whitelist": [
-<<<<<<< HEAD:user_data/config.json
-            "ETH/USDT"
-=======
-            "ALGO/USDT",
-            "ATOM/USDT",
-            "BAT/USDT",
-            "BCH/USDT",
-            "BRD/USDT",
-            "EOS/USDT",
-            "ETH/USDT",
-            "IOTA/USDT",
-            "LINK/USDT",
-            "LTC/USDT",
-            "NEO/USDT",
-            "NXS/USDT",
-            "XMR/USDT",
-            "XRP/USDT",
-            "XTZ/USDT"
->>>>>>> upstream/develop:config_examples/config_binance.example.json
+            "BTC/USDT"
         ],
         "pair_blacklist": [
             "BNB/.*"
