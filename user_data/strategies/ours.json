@@ -11,24 +11,24 @@
       "max_open_trades": 1
     },
     "buy": {
-      "emahigh": 137,
-      "emalong": 208,
+      "emahigh": 139,
+      "emalong": 22,
       "emalow": 32
     },
     "sell": {
-      "emaverylow": 20
+      "emaverylow": 52
     },
     "protection": {},
     "roi": {
-      "0": 0.547,
-      "232": 0.156,
-      "934": 0.033,
-      "1392": 0
+      "0": 0.121,
+      "238": 0.08199999999999999,
+      "660": 0.023,
+      "1626": 0
     },
     "stoploss": {
-      "stoploss": -0.053
+      "stoploss": -0.066
     }
   },
   "ft_stratparam_v": 1,
-  "export_time": "2023-12-29 20:40:14.427323+00:00"
+  "export_time": "2023-12-29 21:44:04.992297+00:00"
 }

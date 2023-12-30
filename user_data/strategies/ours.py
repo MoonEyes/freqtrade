@@ -34,19 +34,20 @@ class ours(IStrategy):
     # Minimal ROI designed for the strategy.
     # This attribute will be overridden if the config file contains "minimal_roi".
     minimal_roi = {
-        "0": 1
-        
+        "0": 10
     }
+
 
     # Optimal stoploss designed for the strategy.
     # This attribute will be overridden if the config file contains "stoploss".
-    stoploss = -0.348
+    stoploss = -0.052
 
-    # Trailing stoploss
-    #trailing_stop = True  # value loaded from strategy
-    #trailing_stop_positive = 0.019  # value loaded from strategy
-    #trailing_stop_positive_offset = 0.11  # value loaded from strategy
-    #trailing_only_offset_is_reached = True  # value loaded from strategy
+    # Trailing stop:
+    #trailing_stop = False
+    #trailing_stop_positive = 0.01
+    #trailing_stop_positive_offset = 0.048
+    #trailing_only_offset_is_reached = True
+
 
     # Optimal timeframe for the strategy.
     timeframe = '1h'
@@ -60,10 +61,10 @@ class ours(IStrategy):
     ignore_roi_if_entry_signal = False
 
     # Hyperoptable parameters
-    emalow = IntParameter(low=1, high=55, default=21, space='buy', optimize=True, load=True)
-    emahigh = IntParameter(low=10, high=200, default=55, space='buy', optimize=True, load=True)
-    emalong = IntParameter(low=55, high=361, default=200, space='buy', optimize=True, load=True)
-    emaverylow = IntParameter(low=9, high=90, default=15, space='sell', optimize=True, load=True)
+    emalow = IntParameter(low=1, high=55, default=32, space='buy', optimize=True, load=True)
+    emahigh = IntParameter(low=10, high=200, default=139, space='buy', optimize=True, load=True)
+    emalong = IntParameter(low=55, high=361, default=22, space='buy', optimize=True, load=True)
+    emaverylow = IntParameter(low=9, high=90, default=52, space='sell', optimize=True, load=True)
 
     # Number of candles the strategy requires before producing valid signals
     startup_candle_count: int = 12
