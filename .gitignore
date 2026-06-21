@@ -1,0 +1,41 @@
+# Python
+*.py[cod]
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtualenv
+venv/
+env/
+.venv/
+.env
+*.env
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+.ipynb_checkpoints/
+
+# ============================================================================
+#  freqtrade — rien d'autre que les stratégies ne doit etre versionne ici.
+#  Secrets, configs reelles, donnees et artefacts restent hors du git.
+# ============================================================================
+# Configs reelles (secrets : cles API, token Telegram, jwt_secret_key)
+config*.json
+user_data/config*.json
+# Donnees de marche
+user_data/data/
+# Artefacts runtime / backtest / hyperopt
+user_data/logs/
+user_data/backtest_results/
+user_data/hyperopt_results/
+user_data/notebooks/
+*.sqlite
+*.sqlite-journal
+*.fthypt
+*.lock
+*.pkl
+*.log
